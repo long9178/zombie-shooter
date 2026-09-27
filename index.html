@@ -1,0 +1,3104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>僵尸枪战：生存挑战 - 完善自救系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px;
+            cursor: default;
+        }
+        
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        #gameHeader {
+            background: linear-gradient(to right, #4a0000, #8b0000);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #ffcc00;
+        }
+        
+        #gameTitle {
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        
+        #gameStats {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        #gameContent {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        #gameArea {
+            flex: 3;
+            position: relative;
+            background-color: #0c0c1a;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        
+        #sidebar {
+            flex: 1;
+            background-color: rgba(30, 30, 46, 0.9);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-left: 2px solid #8b0000;
+        }
+        
+        #controlsInfo {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+        
+        #controlsInfo h3 {
+            color: #ffcc00;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .key {
+            background-color: #333;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        #shop {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            border: 1px solid #444;
+            overflow-y: auto;
+        }
+        
+        #shop h3 {
+            color: #ffcc00;
+            margin-bottom: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .shop-item {
+            background-color: rgba(60, 0, 0, 0.7);
+            border: 1px solid #8b0000;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .shop-item:hover {
+            background-color: rgba(80, 0, 0, 0.9);
+            transform: translateY(-2px);
+        }
+        
+        .shop-item.disabled {
+            background-color: rgba(60, 60, 60, 0.7);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .shop-item.disabled:hover {
+            background-color: rgba(60, 60, 60, 0.7);
+            transform: none;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .shortcut-key {
+            background-color: rgba(255, 204, 0, 0.2);
+            border: 1px solid #ffcc00;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .item-description {
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 8px;
+        }
+        
+        .item-cost {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cost {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        #gameMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px 50px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 100;
+            display: none;
+            border: 3px solid #8b0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+        }
+        
+        #gameMessage h2 {
+            color: #ffcc00;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        #gameMessage p {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        #restartButton {
+            background: linear-gradient(to bottom, #ffcc00, #cc9900);
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #8b0000;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #restartButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.7);
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+            border-left: 3px solid #ffcc00;
+        }
+        
+        #waveIndicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            border-left: 3px solid #ffcc00;
+        }
+        
+        #invincibleIndicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 100, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            border-left: 3px solid #00ff00;
+            display: none;
+        }
+        
+        #cooldownIndicator {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background-color: rgba(100, 100, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            border-left: 3px solid #ffcc00;
+            display: none;
+        }
+        
+        #scopeOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+            z-index: 20;
+        }
+        
+        /* 暂停界面样式 */
+        #pauseOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #pauseMenu {
+            background-color: #333;
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            border: 2px solid #555;
+        }
+        
+        #pauseMenu h2 {
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 32px;
+            color: #ff6b6b;
+        }
+        
+        #pauseButtons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* 主菜单样式 */
+        #mainMenu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #mainMenu h1 {
+            font-size: 48px;
+            color: #ff6b6b;
+            text-align: center;
+            margin-bottom: 50px;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.7);
+        }
+
+        #authPanel {
+            width: min(380px, calc(100vw - 40px));
+            padding: 24px;
+            background: rgba(24, 24, 32, 0.96);
+            border: 1px solid #8b0000;
+            border-top: 3px solid #ffcc00;
+        }
+
+        #authPanel h2 {
+            margin-bottom: 18px;
+            color: #ffcc00;
+            text-align: center;
+        }
+
+        #authForm {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #authForm input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background: #111;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        #authForm button, #authModeButton, #logoutButton {
+            padding: 11px 14px;
+            border: 1px solid #ffcc00;
+            border-radius: 4px;
+            background: #6f1010;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #authModeButton, #logoutButton {
+            background: transparent;
+            color: #ffcc00;
+        }
+
+        #authMessage {
+            min-height: 20px;
+            color: #ffcc00;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        #accountBar {
+            margin-bottom: 18px;
+            color: #ddd;
+            text-align: center;
+        }
+        
+        #menuButtons {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        #startNewGameButton, #continueGameButton {
+            padding: 20px 40px;
+            font-size: 22px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 300px;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #startNewGameButton:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.5);
+        }
+        
+        #continueGameButton {
+            background-color: #2196F3;
+        }
+        
+        #continueGameButton:hover {
+            background-color: #0b7dda;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(33, 150, 243, 0.5);
+        }
+        
+        #continueGameButton.disabled {
+            background-color: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        #continueGameButton.disabled:hover {
+            transform: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #continueButton, #saveExitButton {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #saveExitButton {
+            background-color: #f44336;
+        }
+        
+        #continueButton:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        
+        #saveExitButton:hover {
+            background-color: #d32f2f;
+            transform: scale(1.05);
+        }
+        
+        #scopeCenter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+        }
+        
+        .scope-line {
+            position: absolute;
+            background-color: rgba(255, 0, 0, 0.8);
+        }
+        
+        #scopeHorizontal {
+            width: 30px;
+            height: 2px;
+            top: 14px;
+            left: 0;
+        }
+        
+        #scopeVertical {
+            width: 2px;
+            height: 30px;
+            top: 0;
+            left: 14px;
+        }
+        
+        #scopeCircle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        #reloadIndicator {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #ffcc00;
+            border: 2px solid #ffcc00;
+            display: none;
+        }
+        
+        /* 自救系统样式 */
+        #selfRescueOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        
+        #selfRescueCircle {
+            width: 400px;
+            height: 300px;
+            border-radius: 15px;
+            background: radial-gradient(circle, rgba(139,0,0,0.9) 0%, rgba(90,0,0,0.9) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 5px solid #ffcc00;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+            position: relative;
+            animation: pulse 1.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from {
+                box-shadow: 0 0 30px rgba(255, 0, 0, 0.7);
+                transform: scale(1);
+            }
+            to {
+                box-shadow: 0 0 50px rgba(255, 100, 0, 0.9);
+                transform: scale(1.05);
+            }
+        }
+        
+        #rescueTitle {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        
+        #rescueKeysContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin: 20px 0;
+        }
+        
+        .rescue-key {
+            font-size: 60px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid #444;
+            transition: all 0.3s;
+        }
+        
+        .rescue-key.active {
+            border-color: #ffcc00;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.7);
+            transform: scale(1.1);
+        }
+        
+        .rescue-key.completed {
+            border-color: #2ecc71;
+            background-color: rgba(46, 204, 113, 0.3);
+        }
+        
+        #rescueInstructions {
+            font-size: 16px;
+            color: #ccc;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        #rescueProgress {
+            width: 80%;
+            height: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        #rescueProgressFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #ff0000, #ffcc00);
+            transition: width 0.3s;
+        }
+        
+        #rescueTimer {
+            font-size: 24px;
+            color: #ffcc00;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        
+        #rescueCounter {
+            font-size: 18px;
+            color: white;
+            margin-top: 5px;
+        }
+        
+        .rescue-arrow {
+            font-size: 40px;
+            color: #ffcc00;
+        }
+        
+        @media (max-width: 900px) {
+            #gameContent {
+                flex-direction: column;
+            }
+            
+            #sidebar {
+                border-left: none;
+                border-top: 2px solid #8b0000;
+            }
+            
+            #gameContainer {
+                height: auto;
+                min-height: 90vh;
+            }
+            
+            #selfRescueCircle {
+                width: 300px;
+                height: 250px;
+            }
+            
+            #rescueTitle {
+                font-size: 24px;
+            }
+            
+            .rescue-key {
+                font-size: 40px;
+                width: 70px;
+                height: 70px;
+            }
+            
+            .rescue-arrow {
+                font-size: 30px;
+            }
+            
+            #rescueInstructions {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- 主菜单 -->
+        <div id="mainMenu">
+            <h1>上帝视角射击游戏</h1>
+            <section id="authPanel" aria-labelledby="authTitle">
+                <h2 id="authTitle">账号登录</h2>
+                <form id="authForm">
+                    <input id="authUsername" name="username" type="text" placeholder="账号（3-20位）" minlength="3" maxlength="20" autocomplete="username" required>
+                    <input id="authPassword" name="password" type="password" placeholder="密码（至少8位）" minlength="8" autocomplete="current-password" required>
+                    <button id="authSubmitButton" type="submit">登录</button>
+                    <button id="authModeButton" type="button">创建新账号</button>
+                    <p id="authMessage" role="status" aria-live="polite"></p>
+                </form>
+            </section>
+            <div id="gameMenu" style="display: none;">
+                <div id="accountBar">当前账号：<span id="accountName"></span> <button id="logoutButton" type="button">退出登录</button></div>
+                <div id="menuButtons">
+                <button id="startNewGameButton">开始新游戏</button>
+                <button id="continueGameButton">继续</button>
+                </div>
+            </div>
+        </div>
+        <div id="gameHeader">
+            <div id="gameTitle">僵尸枪战：生存挑战 - 完善自救系统</div>
+            <div id="gameStats">
+                <div class="stat">
+                    <div class="stat-label">积分</div>
+                    <div id="score" class="stat-value">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">生命值</div>
+                    <div id="health" class="stat-value">100</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">弹药</div>
+                    <div id="ammo" class="stat-value">30</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">波次</div>
+                    <div id="wave" class="stat-value">1</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="gameContent">
+            <div id="gameArea">
+                <canvas id="gameCanvas"></canvas>
+                
+                <!-- 狙击镜覆盖层 -->
+                <div id="scopeOverlay">
+                    <div id="scopeCenter">
+                        <div id="scopeHorizontal" class="scope-line"></div>
+                        <div id="scopeVertical" class="scope-line"></div>
+                    </div>
+                    <div id="scopeCircle"></div>
+                </div>
+                
+                <!-- 存储装置UI -->
+                <div id="storageDevice" style="position: fixed; bottom: 20px; right: 20px; width: 100px; height: 150px; border: 2px solid #666; border-radius: 10px; background-color: #222; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px; z-index: 900;">
+                    <div id="storageLight" style="width: 20px; height: 20px; border-radius: 50%; background-color: #333; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>
+                    <div id="storageLabel" style="color: #666; font-size: 12px; text-align: center;">存储装置</div>
+                    <div id="storageProgress" style="width: 80%; height: 60%; background-color: #111; border-radius: 5px; overflow: hidden;">
+                        <div id="storageBar" style="width: 0%; height: 100%; background: linear-gradient(to top, #008000, #00ff00); transition: width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <!-- 暂停界面覆盖层 -->
+                <div id="pauseOverlay" style="display: none;">
+                    <div id="pauseMenu">
+                        <h2>游戏暂停</h2>
+                        <div id="pauseButtons">
+                            <button id="continueButton">继续游戏</button>
+                            <button id="saveExitButton">保存并退出</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="waveIndicator">波次: 1 | 僵尸剩余: 10</div>
+                <div id="invincibleIndicator">无敌时间: 0.0秒</div>
+                <div id="cooldownIndicator">自救冷却: 0.0秒</div>
+                <div id="reloadIndicator">装填中: 1.5秒</div>
+                <div id="instructions">
+                    击杀僵尸获得积分，用积分购买装备。小心，每波僵尸都会更强！<br>
+                    被僵尸包围时触发自救，按提示按键完成自救！<br>
+                    无敌时间内不会触发自救，僵尸也不会造成伤害！<br>
+                    商店物品快捷键: 1-9 | 狙击枪(快捷键4): 高伤害，5发弹容，1.5秒装填
+                </div>
+                <div id="gameMessage">
+                    <h2>游戏结束</h2>
+                    <p>你坚持了 <span id="finalWave">0</span> 波</p>
+                    <p>获得了 <span id="finalScore">0</span> 积分</p>
+                    <button id="restartButton">重新开始</button>
+                </div>
+                
+                <!-- 自救系统覆盖层 -->
+                <div id="selfRescueOverlay">
+                    <div id="selfRescueCircle">
+                        <div id="rescueTitle">自救!</div>
+                        <div id="rescueInstructions">按顺序按下这两个按键</div>
+                        <div id="rescueKeysContainer">
+                            <div id="rescueKey1" class="rescue-key">W</div>
+                            <div class="rescue-arrow">→</div>
+                            <div id="rescueKey2" class="rescue-key">S</div>
+                        </div>
+                        <div id="rescueProgress">
+                            <div id="rescueProgressFill"></div>
+                        </div>
+                        <div id="rescueTimer">8.0</div>
+                        <div id="rescueCounter">当前按键: 0 / 15</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sidebar">
+                <div id="controlsInfo">
+                    <h3>控制说明</h3>
+                    <div class="control-item">
+                        <span>移动</span>
+                        <span class="key">W A S D</span>
+                    </div>
+                    <div class="control-item">
+                        <span>瞄准/射击</span>
+                        <span class="key">鼠标</span>
+                    </div>
+                    <div class="control-item">
+                        <span>重新装弹</span>
+                        <span class="key">R</span>
+                    </div>
+                    <div class="control-item">
+                        <span>商店快捷键</span>
+                        <span class="key">1 2 3 4 5 6 7 8 9</span>
+                    </div>
+                    <div class="control-item">
+                        <span>自救</span>
+                        <span class="key">被包围时触发</span>
+                    </div>
+                </div>
+                
+                <div id="shop">
+                    <h3>装备商店 (快捷键: 1-9)</h3>
+                    <div id="shopItems">
+                        <!-- 商店物品将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏主变量
+        let canvas, ctx;
+        let player = {};
+        let bullets = [];
+        let zombies = [];
+        let particles = [];
+        let score = 0;
+        let health = 100;
+        let maxHealth = 100;
+        let ammo = 30;
+        let maxAmmo = 30;
+        let wave = 1;
+        let zombiesInWave = 10;
+        let zombiesKilled = 0;
+        let gameOver = false;
+let paused = false; // 暂停状态变量
+  let showMainMenu = true; // 控制是否显示主菜单
+  let gameStarted = false; // 标记游戏是否已开始
+  let gameLoopStarted = false; // 保证游戏循环在页面生命周期内只启动一次
+
+        // ==================== 存档系统常量 ====================
+        const LEGACY_SAVE_KEY_PREFIX = 'zombieShooterSave_v1:';
+        const LEGACY_SAVE_KEY = 'zombieShooterSave_v1';
+        const LEGACY_USER_KEY = 'zombieShooterCurrentUser_v1';
+        const SAVE_VERSION = 1;
+        let currentUser = null;
+        let authMode = 'login';
+        let cachedSaveData = null;
+        let lastShotTime = 0;
+        let shotDelay = 300; // 射击延迟（毫秒）
+        let keys = {};
+        let mouse = { x: 0, y: 0 };
+        
+        // 无敌时间相关
+        let invincible = false;
+        let invincibleTimeLeft = 0;
+        let invincibleDuration = 4; // 无敌时间4秒
+        
+        // 自救冷却时间相关
+        let selfRescueCooldown = false;
+        let selfRescueCooldownTime = 5; // 自救成功后5秒内不会再次触发
+        let selfRescueCooldownTimeLeft = 0;
+        
+        // 狙击枪相关变量
+        let isSniperMode = false;
+        let sniperReloadTime = 1500; // 1.5秒装填时间（毫秒）
+        let sniperReloading = false;
+        let sniperReloadStartTime = 0;
+        let sniperAmmo = 5; // 狙击枪弹容量
+        let sniperMaxAmmo = 5;
+        
+        // 武器系统
+        let weapons = [
+            { id: 1, name: "手枪", damage: 20, shotDelay: 300, ammoCost: 1, unlocked: true, description: "标准手枪", shortcut: 1, type: "normal" },
+            { id: 2, name: "冲锋枪", damage: 15, shotDelay: 100, ammoCost: 1, cost: 50, unlocked: false, description: "快速射击但伤害较低", shortcut: 2, type: "normal" },
+            { id: 3, name: "霰弹枪", damage: 40, shotDelay: 800, ammoCost: 2, cost: 100, unlocked: false, description: "高伤害但射速慢", shortcut: 3, type: "normal" },
+            { id: 4, name: "狙击枪", damage: 100, shotDelay: 1500, ammoCost: 1, cost: 250, unlocked: false, description: "超高伤害，5发弹容，1.5秒装填", shortcut: 4, type: "sniper", magazineSize: 5 },
+            { id: 5, name: "步枪", damage: 35, shotDelay: 400, ammoCost: 1, cost: 200, unlocked: false, description: "平衡的武器", shortcut: 5, type: "normal" }
+        ];
+        
+        let currentWeapon = weapons[0];
+        
+        // 升级项目
+        let upgrades = [
+            { id: 1, name: "生命恢复", cost: 30, description: "恢复50点生命值", type: "health", shortcut: 6 },
+            { id: 2, name: "弹药补充", cost: 20, description: "补充所有弹药", type: "ammo", shortcut: 7 },
+            { id: 3, name: "生命上限", cost: 100, description: "增加20点生命上限", type: "maxHealth", shortcut: 8 },
+            { id: 4, name: "移动速度", cost: 80, description: "增加玩家移动速度", type: "speed", shortcut: 9 },
+            { id: 5, name: "无敌护盾", cost: 150, description: "获得3秒无敌时间", type: "invincible", shortcut: 0 }
+        ];
+        
+        // ==================== 自救系统变量 ====================
+        let selfRescueActive = false;
+        let selfRescueProgress = 0;
+        let selfRescueRequired = 15; // 每个按键需要按15次
+        let selfRescueTimeLimit = 8.0; // 8秒
+        let selfRescueTimeLeft = 0;
+        let selfRescueKeys = ["W", "S"]; // 两个按键
+        let currentRescueKeyIndex = 0; // 当前是第几个按键
+        let currentKeyProgress = 0; // 当前按键的进度
+        let selfRescueTimer = null;
+        let nearZombiesCount = 0;
+        let rescueTriggerDistance = 40; // 触发自救的僵尸距离
+        let rescueTriggerCount = 3; // 触发自救需要的最小僵尸数量
+        
+        // 自救按键列表
+        const rescueKeysOptions = ["W", "A", "S", "D"];
+        
+        // 初始化游戏
+        function init() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getBoundingClientRect ? canvas.getContext('2d') : null;
+            
+            if (!ctx) {
+                console.error("无法获取Canvas上下文");
+                return;
+            }
+            
+            // 设置Canvas尺寸
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 初始化玩家
+            player = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 15,
+                speed: 5,
+                color: '#3498db',
+                weapon: currentWeapon,
+                lastRescueTime: 0 // 上次自救成功的时间
+            };
+            
+            // 初始化游戏状态
+            score = 0;
+            health = maxHealth;
+            ammo = maxAmmo;
+            sniperAmmo = sniperMaxAmmo;
+            wave = 1;
+            zombiesInWave = 10;
+            zombiesKilled = 0;
+            gameOver = false;
+            
+            // 初始化自救系统
+            selfRescueActive = false;
+            selfRescueProgress = 0;
+            selfRescueTimeLeft = selfRescueTimeLimit;
+            currentRescueKeyIndex = 0;
+            currentKeyProgress = 0;
+            
+            // 初始化冷却时间
+            selfRescueCooldown = false;
+            selfRescueCooldownTimeLeft = 0;
+            
+            // 初始化狙击枪状态
+            isSniperMode = false;
+            sniperReloading = false;
+            document.getElementById('scopeOverlay').style.display = 'none';
+            document.getElementById('reloadIndicator').style.display = 'none';
+            document.getElementById('cooldownIndicator').style.display = 'none';
+            
+            // 初始化无敌状态
+            invincible = false;
+            invincibleTimeLeft = 0;
+            document.getElementById('invincibleIndicator').style.display = 'none';
+            
+            // 清空数组
+            bullets = [];
+            zombies = [];
+            particles = [];
+            
+            // 隐藏自救界面
+            document.getElementById('selfRescueOverlay').style.display = 'none';
+            
+            // 生成第一波僵尸
+            spawnZombies();
+            
+            // 更新UI
+            updateUI();
+            
+            // 生成商店物品
+            generateShopItems();
+            
+            // 隐藏游戏结束消息
+            document.getElementById('gameMessage').style.display = 'none';
+            
+            // 显示详细的游戏操作指南
+            setTimeout(() => {
+                showMessage("欢迎来到上帝视角射击游戏！");
+            }, 500);
+            
+            setTimeout(() => {
+                showMessage("基本操作：WASD键移动，点击鼠标射击");
+            }, 2000);
+            
+            setTimeout(() => {
+                showMessage("按R键重新装弹，E键切换武器（手枪/狙击枪）");
+            }, 4000);
+            
+            setTimeout(() => {
+                showMessage("按空格键打开商店购买装备和升级");
+            }, 6000);
+            
+            setTimeout(() => {
+                showMessage("被僵尸包围时，需要按顺序按下提示按键自救！");
+            }, 8000);
+            
+            // 初始化主菜单
+            checkForSavedGame(); // 检查是否有可继续的游戏存档
+            toggleMainMenu(showMainMenu); // 显示主菜单
+            
+            // 初始化存储装置状态显示
+            resetStorageDevice();
+            
+            // 不在此处启动游戏循环：循环由 window.onload 中的 startGameLoop()
+            // 统一启动一次，主菜单显示期间循环空转，等待玩家开始或继续游戏
+        }
+        
+        // 调整Canvas尺寸
+        function resizeCanvas() {
+            const gameArea = document.getElementById('gameArea');
+            if (!gameArea) return;
+            
+            canvas.width = gameArea.clientWidth;
+            canvas.height = gameArea.clientHeight;
+        }
+        
+        // 存储装置动画函数
+        function animateStorageDevice(callback) {
+            const light = document.getElementById('storageLight');
+            const bar = document.getElementById('storageBar');
+            let progress = 0;
+            
+            // 开始动画
+            light.style.backgroundColor = '#ff0'; // 黄色，表示正在工作
+            light.style.boxShadow = '0 0 15px #ff0';
+            
+            // 模拟进度条动画
+            const interval = setInterval(() => {
+                progress += 5;
+                bar.style.width = progress + '%';
+                
+                // 每20%闪烁一次灯光
+                if (progress % 20 === 0) {
+                    light.style.backgroundColor = progress < 100 ? '#00ff00' : '#00ff00';
+                    setTimeout(() => {
+                        if (progress < 100) {
+                            light.style.backgroundColor = '#ff0';
+                        }
+                    }, 200);
+                }
+                
+                // 完成动画
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    light.style.backgroundColor = '#00ff00'; // 绿色，表示完成
+                    light.style.boxShadow = '0 0 15px #00ff00';
+                    
+                    // 延迟执行回调
+                    setTimeout(callback, 500);
+                }
+            }, 50);
+        }
+
+        // 重置存储装置状态
+        function resetStorageDevice() {
+            const light = document.getElementById('storageLight');
+            const bar = document.getElementById('storageBar');
+            
+            // 检查是否有存档
+            const hasSavedGame = hasValidSave();
+            
+            if (hasSavedGame) {
+                // 有存档时显示绿色
+                light.style.backgroundColor = '#00ff00';
+                light.style.boxShadow = '0 0 10px #00ff00';
+                bar.style.width = '100%';
+            } else {
+                // 无存档时显示灰色
+                light.style.backgroundColor = '#333';
+                light.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+                bar.style.width = '0%';
+            }
+        }
+
+        // ==================== 存档系统 ====================
+
+        // 读取数字并做范围校验，非法值回退为默认值
+        function readSaveNumber(value, fallback, min, max) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return fallback;
+            return Math.max(min, Math.min(max, n));
+        }
+
+        // 收集当前游戏的完整快照
+        function collectSaveData() {
+            return {
+                version: SAVE_VERSION,
+                savedAt: Date.now(),
+                // 核心数值
+                score: score,
+                health: health,
+                maxHealth: maxHealth,
+                ammo: ammo,
+                maxAmmo: maxAmmo,
+                sniperAmmo: sniperAmmo,
+                sniperMaxAmmo: sniperMaxAmmo,
+                // 波次进度
+                wave: wave,
+                zombiesInWave: zombiesInWave,
+                zombiesKilled: zombiesKilled,
+                // 玩家状态（位置 + 速度升级）
+                player: {
+                    x: player.x,
+                    y: player.y,
+                    speed: player.speed
+                },
+                // 武器解锁与装备情况
+                unlockedWeaponIds: weapons.filter(w => w.unlocked).map(w => w.id),
+                currentWeaponId: currentWeapon.id,
+                // 当前波次剩余僵尸（保留位置和残血，读档后无缝继续）
+                // 数量以波次进度为准做一次裁剪，避免任何边缘情况下存档与计数不一致
+                zombies: zombies.slice(0, Math.max(0, zombiesInWave - zombiesKilled)).map(z => ({
+                    x: Math.round(z.x * 10) / 10,
+                    y: Math.round(z.y * 10) / 10,
+                    health: Math.max(1, Math.round(z.health))
+                }))
+            };
+        }
+
+        async function apiRequest(path, options = {}) {
+            const headers = { ...(options.headers || {}) };
+            if (options.body) headers['Content-Type'] = 'application/json';
+
+            let response;
+            try {
+                response = await fetch(path, {
+                    ...options,
+                    headers,
+                    credentials: 'same-origin'
+                });
+            } catch (error) {
+                throw new Error('无法连接后端，请确认服务已启动并通过 http://127.0.0.1:3000 打开页面');
+            }
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const error = new Error(result.error || '请求失败');
+                error.status = response.status;
+                throw error;
+            }
+            return result;
+        }
+
+        function readLegacySave(username) {
+            try {
+                const previousUsername = localStorage.getItem(LEGACY_USER_KEY);
+                let raw = null;
+                if (previousUsername && previousUsername.toLowerCase() === username.toLowerCase()) {
+                    raw = localStorage.getItem(LEGACY_SAVE_KEY_PREFIX + encodeURIComponent(previousUsername));
+                } else if (!previousUsername) {
+                    raw = localStorage.getItem(LEGACY_SAVE_KEY);
+                }
+                if (!raw) return null;
+                const save = JSON.parse(raw);
+                return save && save.version === SAVE_VERSION ? save : null;
+            } catch (error) {
+                console.warn('读取旧存档失败:', error);
+                return null;
+            }
+        }
+
+        async function showAccountMenu(username) {
+            currentUser = username;
+            cachedSaveData = null;
+            document.getElementById('accountName').textContent = username;
+            document.getElementById('authPanel').style.display = 'none';
+            document.getElementById('gameMenu').style.display = 'block';
+
+            try {
+                const result = await apiRequest('/api/save');
+                cachedSaveData = result.save && result.save.version === SAVE_VERSION ? result.save : null;
+                if (!cachedSaveData) {
+                    const legacySave = readLegacySave(username);
+                    if (legacySave) {
+                        await apiRequest('/api/save', {
+                            method: 'PUT',
+                            body: JSON.stringify({ save: legacySave })
+                        });
+                        cachedSaveData = legacySave;
+                    }
+                }
+            } catch (error) {
+                console.error('加载游戏存档失败:', error);
+                document.getElementById('authMessage').textContent = `账号已登录，但存档加载失败：${error.message}`;
+            }
+            checkForSavedGame();
+            resetStorageDevice();
+        }
+
+        function setAuthMode(mode) {
+            authMode = mode;
+            const registering = mode === 'register';
+            document.getElementById('authTitle').textContent = registering ? '创建账号' : '账号登录';
+            document.getElementById('authSubmitButton').textContent = registering ? '注册并登录' : '登录';
+            document.getElementById('authModeButton').textContent = registering ? '返回登录' : '创建新账号';
+            document.getElementById('authPassword').autocomplete = registering ? 'new-password' : 'current-password';
+            document.getElementById('authMessage').textContent = '';
+        }
+
+        async function submitAuth(event) {
+            event.preventDefault();
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const message = document.getElementById('authMessage');
+            const submitButton = document.getElementById('authSubmitButton');
+            if (!/^[A-Za-z0-9_\u4e00-\u9fa5]{3,20}$/.test(username)) {
+                message.textContent = '账号需为3-20位中文、字母、数字或下划线';
+                return;
+            }
+            if (password.length < 8) {
+                message.textContent = '密码至少需要8位';
+                return;
+            }
+
+            submitButton.disabled = true;
+            message.textContent = '正在验证...';
+            try {
+                const endpoint = authMode === 'register' ? '/api/register' : '/api/login';
+                const result = await apiRequest(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+                await showAccountMenu(result.user.username);
+                document.getElementById('authForm').reset();
+            } catch (error) {
+                console.error('账号操作失败:', error);
+                message.textContent = error.message || '操作失败';
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+
+        async function restoreAccountSession() {
+            try {
+                const result = await apiRequest('/api/session');
+                await showAccountMenu(result.user.username);
+            } catch (error) {
+                currentUser = null;
+                cachedSaveData = null;
+                document.getElementById('authPanel').style.display = 'block';
+                document.getElementById('gameMenu').style.display = 'none';
+                if (error.status !== 401) {
+                    document.getElementById('authMessage').textContent = error.message;
+                }
+                checkForSavedGame();
+            }
+        }
+
+        // 保存游戏进度到服务端。
+        async function saveGameProgress() {
+            if (!gameStarted || gameOver || selfRescueActive || !currentUser) return false;
+            const save = collectSaveData();
+            try {
+                await apiRequest('/api/save', {
+                    method: 'PUT',
+                    body: JSON.stringify({ save })
+                });
+                cachedSaveData = save;
+                checkForSavedGame();
+                resetStorageDevice();
+                return true;
+            } catch (error) {
+                console.error('保存游戏进度失败:', error);
+                alert(`保存失败：${error.message}`);
+                return false;
+            }
+        }
+
+        // 是否存在有效存档
+        function hasValidSave() {
+            return loadSaveData() !== null;
+        }
+
+        // 读取并解析存档，任何异常或版本不符都返回 null
+        function loadSaveData() {
+            return cachedSaveData;
+        }
+
+        // 删除存档（开始新游戏 / 角色死亡时调用）
+        async function clearSavedGame() {
+            cachedSaveData = null;
+            checkForSavedGame();
+            try {
+                if (!currentUser) return false;
+                await apiRequest('/api/save', { method: 'DELETE' });
+                return true;
+            } catch (error) {
+                console.error('删除服务端存档失败:', error);
+                return false;
+            }
+        }
+
+        // 把一局游戏的所有状态重置为初始值（开始新游戏 / 读档前先调用）
+        function resetRunState() {
+            // 核心数值
+            score = 0;
+            maxHealth = 100;
+            health = maxHealth;
+            maxAmmo = 30;
+            ammo = maxAmmo;
+            sniperMaxAmmo = 5;
+            sniperAmmo = sniperMaxAmmo;
+            wave = 1;
+            zombiesInWave = 10;
+            zombiesKilled = 0;
+            gameOver = false;
+            paused = false;
+            lastShotTime = 0;
+
+            // 武器：只保留初始手枪，其余全部锁定
+            weapons.forEach(w => { w.unlocked = (w.id === 1); });
+            currentWeapon = weapons[0];
+            shotDelay = currentWeapon.shotDelay;
+            isSniperMode = false;
+            sniperReloading = false;
+
+            // 玩家
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.radius = 15;
+            player.speed = 5;
+            player.color = '#3498db';
+            player.weapon = currentWeapon;
+
+            // 实体与输入
+            bullets = [];
+            zombies = [];
+            particles = [];
+            keys = {};
+
+            // 限时增益与自救状态不跨局保留
+            invincible = false;
+            invincibleTimeLeft = 0;
+            selfRescueCooldown = false;
+            selfRescueCooldownTimeLeft = 0;
+            selfRescueActive = false;
+            selfRescueProgress = 0;
+            currentRescueKeyIndex = 0;
+            currentKeyProgress = 0;
+            if (selfRescueTimer) {
+                clearInterval(selfRescueTimer);
+                selfRescueTimer = null;
+            }
+
+            // 隐藏所有覆盖层与指示器
+            document.getElementById('scopeOverlay').style.display = 'none';
+            document.getElementById('reloadIndicator').style.display = 'none';
+            document.getElementById('cooldownIndicator').style.display = 'none';
+            document.getElementById('invincibleIndicator').style.display = 'none';
+            document.getElementById('selfRescueOverlay').style.display = 'none';
+            document.getElementById('pauseOverlay').style.display = 'none';
+            document.getElementById('gameMessage').style.display = 'none';
+        }
+
+        // 根据存档数据恢复整局游戏
+        function applySaveData(data) {
+            // 核心数值（带范围校验）
+            score = readSaveNumber(data.score, 0, 0, 1e12);
+            maxHealth = readSaveNumber(data.maxHealth, 100, 1, 100000);
+            health = Math.min(maxHealth, readSaveNumber(data.health, maxHealth, 1, maxHealth));
+            maxAmmo = readSaveNumber(data.maxAmmo, 30, 1, 100000);
+            ammo = readSaveNumber(data.ammo, maxAmmo, 0, maxAmmo);
+            sniperMaxAmmo = readSaveNumber(data.sniperMaxAmmo, 5, 1, 100);
+            sniperAmmo = readSaveNumber(data.sniperAmmo, sniperMaxAmmo, 0, sniperMaxAmmo);
+            wave = Math.max(1, Math.round(readSaveNumber(data.wave, 1, 1, 9999)));
+            zombiesInWave = Math.max(0, Math.round(
+                readSaveNumber(data.zombiesInWave, 10 + Math.floor(wave * 1.5), wave, 99999)
+            ));
+            zombiesKilled = Math.max(0, Math.min(zombiesInWave, Math.round(
+                readSaveNumber(data.zombiesKilled, 0, 0, zombiesInWave)
+            )));
+
+            // 恢复已解锁武器与当前装备
+            const unlockedIds = Array.isArray(data.unlockedWeaponIds) ? data.unlockedWeaponIds : [];
+            weapons.forEach(w => {
+                w.unlocked = (w.id === 1) || unlockedIds.includes(w.id);
+            });
+            let savedWeapon = weapons.find(w => w.id === data.currentWeaponId && w.unlocked);
+            if (!savedWeapon) savedWeapon = weapons[0]; // 存档武器丢失时安全回退
+            currentWeapon = savedWeapon;
+            shotDelay = currentWeapon.shotDelay;
+            player.weapon = currentWeapon;
+            isSniperMode = currentWeapon.type === 'sniper';
+
+            // 恢复玩家位置与移速（限制在画布范围内）
+            const savedPlayer = data.player || {};
+            player.radius = 15;
+            player.speed = readSaveNumber(savedPlayer.speed, 5, 1, 50);
+            player.x = readSaveNumber(savedPlayer.x, canvas.width / 2, player.radius, canvas.width - player.radius);
+            player.y = readSaveNumber(savedPlayer.y, canvas.height / 2, player.radius, canvas.height - player.radius);
+
+            // 恢复场上僵尸（保留残血与位置）
+            bullets = [];
+            particles = [];
+            const aliveExpected = Math.max(0, zombiesInWave - zombiesKilled);
+            const savedZombies = Array.isArray(data.zombies) ? data.zombies : [];
+            if (savedZombies.length > 0) {
+                zombies = savedZombies.slice(0, aliveExpected > 0 ? aliveExpected : savedZombies.length).map(zs => {
+                    const z = createZombie(
+                        wave,
+                        readSaveNumber(zs.x, 0, -200, canvas.width + 200),
+                        readSaveNumber(zs.y, 0, -200, canvas.height + 200)
+                    );
+                    z.health = Math.max(1, Math.min(z.maxHealth, Math.round(
+                        readSaveNumber(zs.health, z.maxHealth, 1, z.maxHealth)
+                    )));
+                    return z;
+                });
+            } else {
+                // 存档中没有僵尸数据时的兜底：按应有数量重新生成一波
+                zombies = [];
+                spawnZombieGroup(aliveExpected);
+            }
+
+            // 限时类增益不随存档恢复，重新进入时为干净状态
+            invincible = false;
+            invincibleTimeLeft = 0;
+            selfRescueCooldown = false;
+            selfRescueCooldownTimeLeft = 0;
+            selfRescueActive = false;
+            sniperReloading = false;
+            lastShotTime = 0;
+
+            // 同步覆盖层显示
+            document.getElementById('scopeOverlay').style.display = isSniperMode ? 'block' : 'none';
+            document.getElementById('reloadIndicator').style.display = 'none';
+            document.getElementById('cooldownIndicator').style.display = 'none';
+            document.getElementById('invincibleIndicator').style.display = 'none';
+            document.getElementById('selfRescueOverlay').style.display = 'none';
+        }
+        
+        // 切换暂停状态函数
+        function togglePause() {
+            paused = !paused;
+            const pauseOverlay = document.getElementById('pauseOverlay');
+            if (paused) {
+                // 暂停游戏
+                pauseOverlay.style.display = 'flex';
+                pauseOverlay.style.pointerEvents = 'auto';
+                // 可以在这里添加暂停音效等
+            } else {
+                // 继续游戏
+                pauseOverlay.style.display = 'none';
+                pauseOverlay.style.pointerEvents = 'none';
+                // 可以在这里添加继续音效等
+            }
+        }
+        
+        function toggleMainMenu(show) {
+            showMainMenu = show;
+            const mainMenu = document.getElementById('mainMenu');
+            if (mainMenu) {
+                mainMenu.style.display = show ? 'flex' : 'none';
+            }
+            const canvas = document.getElementById('gameCanvas');
+            if (canvas) {
+                canvas.style.filter = show ? 'blur(5px)' : (paused ? 'blur(5px)' : 'none');
+            }
+        }
+        
+        // 检查存档并刷新主菜单"继续游戏"按钮的状态与摘要信息
+        function checkForSavedGame() {
+            const data = loadSaveData();
+            const continueButton = document.getElementById('continueGameButton');
+            if (continueButton) {
+                if (data) {
+                    continueButton.classList.remove('disabled');
+                    continueButton.textContent = `继续游戏（第 ${data.wave} 波 · ${data.score} 积分）`;
+                    const savedDate = new Date(data.savedAt);
+                    const pad = n => String(n).padStart(2, '0');
+                    if (Number.isFinite(savedDate.getTime())) {
+                        continueButton.title = `保存时间：${pad(savedDate.getMonth() + 1)}-${pad(savedDate.getDate())} ` +
+                            `${pad(savedDate.getHours())}:${pad(savedDate.getMinutes())}`;
+                    }
+                } else {
+                    continueButton.classList.add('disabled');
+                    continueButton.textContent = '继续游戏';
+                    continueButton.title = '';
+                }
+            }
+            return data !== null;
+        }
+
+        // 保存后返回主菜单（不刷新页面）
+        function returnToMainMenu() {
+            gameStarted = false;
+            paused = false;
+            keys = {}; // 释放所有按键，避免回到菜单后按键状态卡住
+            document.getElementById('pauseOverlay').style.display = 'none';
+            toggleMainMenu(true);
+            checkForSavedGame();
+            resetStorageDevice();
+        }
+
+        async function startNewGame() {
+            // 开新局前清除旧存档，避免误继续
+            if (!await clearSavedGame()) {
+                showMessage('无法清除云端存档，请检查服务器连接');
+                return;
+            }
+
+            // 确保画布尺寸正确（可能在菜单显示期间窗口大小发生过变化）
+            resizeCanvas();
+
+            // 重置全部状态并生成第一波僵尸
+            resetRunState();
+            spawnZombies();
+
+            gameOver = false;
+            paused = false;
+            gameStarted = true;
+
+            // 隐藏主菜单
+            toggleMainMenu(false);
+
+            // 刷新商店与UI
+            generateShopItems();
+            updateUI();
+            checkForSavedGame();
+            resetStorageDevice();
+            // 游戏循环在页面加载时就已启动，这里无需再次启动
+        }
+
+        function continueGame() {
+            const data = loadSaveData();
+            if (!data) {
+                // 存档损坏或不存在时停留在主菜单
+                checkForSavedGame();
+                resetStorageDevice();
+                return;
+            }
+
+            resizeCanvas();
+
+            // 先回到干净的初始状态，再用存档覆盖恢复
+            resetRunState();
+            applySaveData(data);
+
+            gameOver = false;
+            paused = false;
+            gameStarted = true;
+
+            toggleMainMenu(false);
+
+            generateShopItems();
+            updateUI();
+            showMessage(`存档读取成功：第 ${wave} 波，${score} 积分`);
+        }
+        
+        // 游戏主循环（单帧逻辑，自身不再调度；由 gameTick 统一驱动，保证只有一条循环链）
+        function gameLoop() {
+            // 主菜单 / 游戏结束 / 暂停 时冻结游戏逻辑，画布保留最后一帧
+            if (!gameStarted || gameOver || paused) return;
+            
+            // 更新无敌时间
+            updateInvincible();
+            
+            // 更新自救冷却时间
+            updateSelfRescueCooldown();
+            
+            // 更新狙击枪装填状态
+            updateSniperReload();
+            
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            drawBackground();
+            
+            // 更新和绘制粒子
+            updateParticles();
+            
+            // 如果不处于自救状态，更新游戏元素
+            if (!selfRescueActive) {
+                // 更新玩家
+                updatePlayer();
+                
+                // 更新子弹
+                updateBullets();
+                
+                // 更新僵尸
+                updateZombies();
+                
+                // 检查碰撞
+                checkCollisions();
+                
+                // 检查是否需要触发自救（无敌时间内不会触发）
+                if (!invincible && !selfRescueCooldown) {
+                    checkSelfRescueTrigger();
+                }
+            } else {
+                // 自救状态下，僵尸停止移动，玩家不能移动
+                // 但僵尸会保持在触发自救时的位置
+                // 玩家不能射击
+                // 自救界面已经在最上层显示
+            }
+            
+            // 绘制玩家
+            drawPlayer();
+            
+            // 绘制子弹
+            drawBullets();
+            
+            // 绘制僵尸
+            drawZombies();
+            
+            // 绘制粒子
+            drawParticles();
+            
+            // 检查是否进入下一波
+            if (!selfRescueActive && zombiesKilled >= zombiesInWave) {
+                nextWave();
+            }
+            
+            // 更新波次指示器
+            document.getElementById('waveIndicator').innerHTML =
+                `波次: ${wave} | 僵尸剩余: ${zombiesInWave - zombiesKilled}`;
+        }
+
+        // 全局唯一的帧调度器：页面加载后启动一次，贯穿整个页面生命周期
+        function gameTick() {
+            gameLoop();
+            requestAnimationFrame(gameTick);
+        }
+
+        function startGameLoop() {
+            if (gameLoopStarted) return;
+            gameLoopStarted = true;
+            requestAnimationFrame(gameTick);
+        }
+        
+        // 更新无敌时间
+        function updateInvincible() {
+            if (invincible) {
+                invincibleTimeLeft -= 1/60; // 假设60帧
+                document.getElementById('invincibleIndicator').innerHTML = 
+                    `无敌时间: ${invincibleTimeLeft.toFixed(1)}秒`;
+                
+                if (invincibleTimeLeft <= 0) {
+                    invincible = false;
+                    document.getElementById('invincibleIndicator').style.display = 'none';
+                } else {
+                    document.getElementById('invincibleIndicator').style.display = 'block';
+                }
+            }
+        }
+        
+        // 更新自救冷却时间
+        function updateSelfRescueCooldown() {
+            if (selfRescueCooldown) {
+                selfRescueCooldownTimeLeft -= 1/60; // 假设60帧
+                
+                if (selfRescueCooldownTimeLeft <= 0) {
+                    selfRescueCooldown = false;
+                    document.getElementById('cooldownIndicator').style.display = 'none';
+                } else {
+                    document.getElementById('cooldownIndicator').innerHTML = 
+                        `自救冷却: ${selfRescueCooldownTimeLeft.toFixed(1)}秒`;
+                    document.getElementById('cooldownIndicator').style.display = 'block';
+                }
+            }
+        }
+        
+        // 更新狙击枪装填状态
+        function updateSniperReload() {
+            if (sniperReloading && currentWeapon.type === "sniper") {
+                const currentTime = Date.now();
+                const elapsed = currentTime - sniperReloadStartTime;
+                const timeLeft = Math.max(0, sniperReloadTime - elapsed);
+                
+                if (timeLeft <= 0) {
+                    sniperReloading = false;
+                    document.getElementById('reloadIndicator').style.display = 'none';
+                } else {
+                    // 更新装填指示器
+                    const secondsLeft = (timeLeft / 1000).toFixed(1);
+                    document.getElementById('reloadIndicator').innerHTML = `装填中: ${secondsLeft}秒`;
+                    document.getElementById('reloadIndicator').style.display = 'block';
+                }
+            }
+        }
+        
+        // 绘制背景
+        function drawBackground() {
+            // 绘制网格背景
+            const gridSize = 40;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            
+            // 垂直线
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // 水平线
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // 绘制中心区域
+            ctx.fillStyle = 'rgba(52, 152, 219, 0.05)';
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height/2, 100, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // 更新玩家
+        function updatePlayer() {
+            // 自救状态下不能移动
+            if (selfRescueActive) return;
+            
+            // 玩家移动
+            let moveX = 0, moveY = 0;
+            
+            if (keys['w'] || keys['W']) moveY -= player.speed;
+            if (keys['s'] || keys['S']) moveY += player.speed;
+            if (keys['a'] || keys['A']) moveX -= player.speed;
+            if (keys['d'] || keys['D']) moveX += player.speed;
+            
+            // 对角线移动速度修正
+            if (moveX !== 0 && moveY !== 0) {
+                moveX *= 0.7071; // 1/√2
+                moveY *= 0.7071;
+            }
+            
+            // 更新玩家位置
+            player.x += moveX;
+            player.y += moveY;
+            
+            // 限制玩家在画布内
+            player.x = Math.max(player.radius, Math.min(canvas.width - player.radius, player.x));
+            player.y = Math.max(player.radius, Math.min(canvas.height - player.radius, player.y));
+        }
+        
+        // 绘制玩家
+        function drawPlayer() {
+            // 无敌状态下的特效
+            if (invincible) {
+                // 绘制无敌光环
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 闪烁效果
+                const alpha = 0.7 + 0.3 * Math.sin(Date.now() / 100);
+                ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`;
+                
+                // 绘制无敌文字提示
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.7)';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('无敌', player.x, player.y - player.radius - 15);
+            } else {
+                ctx.fillStyle = player.color;
+            }
+            
+            // 绘制玩家身体
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 如果不是自救状态，绘制武器方向（狙击枪模式下不绘制武器方向）
+            if (!selfRescueActive && currentWeapon.type !== "sniper") {
+                const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+                const weaponLength = 20;
+                
+                ctx.strokeStyle = '#2c3e50';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(
+                    player.x + Math.cos(angle) * weaponLength,
+                    player.y + Math.sin(angle) * weaponLength
+                );
+                ctx.stroke();
+                
+                // 绘制玩家眼睛
+                const eyeRadius = 4;
+                const eyeOffset = 5;
+                const eyeX = player.x + Math.cos(angle) * eyeOffset;
+                const eyeY = player.y + Math.sin(angle) * eyeOffset;
+                
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (selfRescueActive) {
+                // 自救状态下，绘制特殊的眼睛（表示紧张）
+                ctx.fillStyle = 'red';
+                ctx.beginPath();
+                ctx.arc(player.x - 5, player.y - 5, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(player.x + 5, player.y - 5, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // 绘制生命值条
+            const barWidth = 40;
+            const barHeight = 6;
+            const barX = player.x - barWidth / 2;
+            const barY = player.y - player.radius - 10;
+            
+            // 背景条
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+            
+            // 生命值条
+            const healthWidth = (health / maxHealth) * barWidth;
+            ctx.fillStyle = health > 50 ? '#2ecc71' : health > 25 ? '#f39c12' : '#e74c3c';
+            ctx.fillRect(barX, barY, healthWidth, barHeight);
+            
+            // 边框
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+            
+            // 如果是狙击枪模式，在玩家旁边显示剩余弹药
+            if (currentWeapon.type === "sniper") {
+                ctx.fillStyle = '#ffcc00';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${sniperAmmo}/${sniperMaxAmmo}`, player.x, player.y + player.radius + 15);
+            }
+        }
+        
+        // 僵尸工厂：属性随波次增强（普通生成与存档恢复共用，保证数值一致）
+        function createZombie(zombieWave, x, y) {
+            const zombieHealth = 30 + (zombieWave * 5);
+            const zombieSpeed = Math.min(1 + (zombieWave * 0.1), 3.5); // 限制最大速度
+            return {
+                x: x,
+                y: y,
+                radius: 12 + (zombieWave * 0.5),
+                speed: zombieSpeed,
+                color: zombieWave === 1 ? '#27ae60' :
+                       zombieWave <= 3 ? '#d35400' :
+                       zombieWave <= 5 ? '#c0392b' : '#8e44ad',
+                health: zombieHealth,
+                maxHealth: zombieHealth,
+                damage: 5 + (zombieWave * 1),
+                // 自救时会把速度临时置0，结束后恢复用
+                originalSpeed: zombieSpeed
+            };
+        }
+
+        // 在屏幕边缘随机取一个出生点
+        function randomEdgePosition() {
+            const side = Math.floor(Math.random() * 4);
+            switch (side) {
+                case 0: // 上边
+                    return { x: Math.random() * canvas.width, y: -20 };
+                case 1: // 右边
+                    return { x: canvas.width + 20, y: Math.random() * canvas.height };
+                case 2: // 下边
+                    return { x: Math.random() * canvas.width, y: canvas.height + 20 };
+                default: // 左边
+                    return { x: -20, y: Math.random() * canvas.height };
+            }
+        }
+
+        // 在当前波次下补充生成指定数量的僵尸（不清空已有僵尸）
+        function spawnZombieGroup(count) {
+            for (let i = 0; i < count; i++) {
+                const pos = randomEdgePosition();
+                zombies.push(createZombie(wave, pos.x, pos.y));
+            }
+        }
+
+        // 生成一整波僵尸（新一波开始时调用，同时清零本波击杀数）
+        function spawnZombies() {
+            zombies = [];
+            zombiesKilled = 0;
+            spawnZombieGroup(zombiesInWave);
+        }
+        
+        // 更新僵尸
+        function updateZombies() {
+            // 自救状态下，僵尸停止移动
+            if (selfRescueActive) return;
+            
+            for (let i = zombies.length - 1; i >= 0; i--) {
+                const zombie = zombies[i];
+                
+                // 计算朝向玩家的方向
+                const dx = player.x - zombie.x;
+                const dy = player.y - zombie.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 移动僵尸
+                if (distance > 0) {
+                    zombie.x += (dx / distance) * zombie.speed;
+                    zombie.y += (dy / distance) * zombie.speed;
+                }
+                
+                // 检查僵尸是否攻击玩家
+                if (distance < player.radius + zombie.radius) {
+                    // 无敌状态下，僵尸不会造成伤害
+                    if (!invincible && !selfRescueActive) {
+                        health -= zombie.damage * 0.1; // 降低伤害系数，避免瞬间死亡
+                        
+                        // 受伤效果
+                        createParticles(zombie.x, zombie.y, '#e74c3c', 3);
+                        
+                        // 更新UI
+                        updateUI();
+                        
+                        // 检查游戏结束
+                        if (health <= 0) {
+                            health = 0;
+                            gameOver = true;
+                            showGameOver();
+                            return;
+                        }
+                        
+                        // 击退效果
+                        const knockback = 5;
+                        player.x -= (dx / distance) * knockback;
+                        player.y -= (dy / distance) * knockback;
+                    } else if (invincible) {
+                        // 无敌状态下，僵尸接触玩家时会被弹开
+                        const knockback = 8;
+                        zombie.x -= (dx / distance) * knockback;
+                        zombie.y -= (dy / distance) * knockback;
+                        
+                        // 无敌状态下接触僵尸有特效
+                        createParticles(zombie.x, zombie.y, '#00ff00', 3);
+                    }
+                }
+            }
+        }
+        
+        // 绘制僵尸
+        function drawZombies() {
+            for (const zombie of zombies) {
+                // 绘制僵尸身体
+                ctx.fillStyle = zombie.color;
+                ctx.beginPath();
+                ctx.arc(zombie.x, zombie.y, zombie.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 绘制僵尸眼睛
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(zombie.x - 4, zombie.y - 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(zombie.x + 4, zombie.y - 4, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 如果自救状态，僵尸眼睛变红
+                if (selfRescueActive) {
+                    ctx.fillStyle = 'red';
+                    ctx.beginPath();
+                    ctx.arc(zombie.x - 4, zombie.y - 4, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(zombie.x + 4, zombie.y - 4, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // 绘制僵尸生命值条
+                if (zombie.health < zombie.maxHealth) {
+                    const barWidth = 25;
+                    const barHeight = 4;
+                    const barX = zombie.x - barWidth / 2;
+                    const barY = zombie.y - zombie.radius - 8;
+                    
+                    // 背景条
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
+                    
+                    // 生命值条
+                    const healthWidth = (zombie.health / zombie.maxHealth) * barWidth;
+                    ctx.fillStyle = zombie.health > 50 ? '#2ecc71' : zombie.health > 25 ? '#f39c12' : '#e74c3c';
+                    ctx.fillRect(barX, barY, healthWidth, barHeight);
+                }
+            }
+        }
+        
+        // 创建子弹
+        function createBullet() {
+            // 自救状态下不能射击
+            if (selfRescueActive) return;
+            
+            // 狙击枪特殊处理
+            if (currentWeapon.type === "sniper") {
+                // 检查是否正在装填
+                if (sniperReloading) {
+                    showMessage("狙击枪正在装填！");
+                    return;
+                }
+                
+                // 检查是否有弹药
+                if (sniperAmmo <= 0) {
+                    showMessage("狙击枪弹药已空！按R键装填");
+                    return;
+                }
+                
+                const currentTime = Date.now();
+                
+                // 检查射击延迟
+                if (currentTime - lastShotTime < shotDelay) {
+                    return;
+                }
+                
+                // 计算子弹方向
+                const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+                
+                // 创建狙击枪子弹（更快、更直）
+                bullets.push({
+                    x: player.x + Math.cos(angle) * 20,
+                    y: player.y + Math.sin(angle) * 20,
+                    velocityX: Math.cos(angle) * 20, // 狙击枪子弹速度更快
+                    velocityY: Math.sin(angle) * 20,
+                    radius: 6, // 狙击枪子弹更大
+                    damage: currentWeapon.damage,
+                    color: '#00ff00', // 绿色子弹表示狙击枪
+                    isSniper: true
+                });
+                
+                // 更新射击时间和弹药
+                lastShotTime = currentTime;
+                sniperAmmo--;
+                
+                // 狙击枪射击后开始装填
+                sniperReloading = true;
+                sniperReloadStartTime = currentTime;
+                
+                // 创建枪口火焰粒子
+                createParticles(
+                    player.x + Math.cos(angle) * 15,
+                    player.y + Math.sin(angle) * 15,
+                    '#00ff00',
+                    10
+                );
+                
+                // 狙击枪有后坐力效果
+                const recoil = 10;
+                player.x -= Math.cos(angle) * recoil * 0.3;
+                player.y -= Math.sin(angle) * recoil * 0.3;
+                
+            } else {
+                // 普通武器处理
+                const currentTime = Date.now();
+                
+                // 检查射击延迟和弹药
+                if (currentTime - lastShotTime < shotDelay || ammo <= 0) {
+                    return;
+                }
+                
+                // 计算子弹方向
+                const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+                
+                // 创建子弹
+                bullets.push({
+                    x: player.x + Math.cos(angle) * 20,
+                    y: player.y + Math.sin(angle) * 20,
+                    velocityX: Math.cos(angle) * 10,
+                    velocityY: Math.sin(angle) * 10,
+                    radius: 4,
+                    damage: currentWeapon.damage,
+                    color: '#f1c40f',
+                    isSniper: false
+                });
+                
+                // 更新射击时间和弹药
+                lastShotTime = currentTime;
+                ammo -= currentWeapon.ammoCost;
+                
+                // 创建枪口火焰粒子
+                createParticles(
+                    player.x + Math.cos(angle) * 15,
+                    player.y + Math.sin(angle) * 15,
+                    '#f39c12',
+                    5
+                );
+            }
+            
+            // 更新UI
+            updateUI();
+        }
+        
+        // 更新子弹
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                
+                // 更新子弹位置
+                bullet.x += bullet.velocityX;
+                bullet.y += bullet.velocityY;
+                
+                // 移除超出画布的子弹
+                if (bullet.x < -bullet.radius || bullet.x > canvas.width + bullet.radius ||
+                    bullet.y < -bullet.radius || bullet.y > canvas.height + bullet.radius) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+            }
+        }
+        
+        // 绘制子弹
+        function drawBullets() {
+            for (const bullet of bullets) {
+                // 绘制子弹
+                if (bullet.isSniper) {
+                    // 狙击枪子弹有特殊样式
+                    ctx.fillStyle = bullet.color;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 狙击枪子弹有尾迹效果
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x - bullet.velocityX * 0.2, bullet.y - bullet.velocityY * 0.2, bullet.radius * 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x - bullet.velocityX * 0.4, bullet.y - bullet.velocityY * 0.4, bullet.radius * 0.6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // 普通子弹
+                    ctx.fillStyle = bullet.color;
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 子弹尾迹效果
+                    ctx.fillStyle = 'rgba(241, 196, 15, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(bullet.x - bullet.velocityX * 0.3, bullet.y - bullet.velocityY * 0.3, bullet.radius * 0.7, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // 检查碰撞
+        function checkCollisions() {
+            // 子弹与僵尸碰撞
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                
+                for (let j = zombies.length - 1; j >= 0; j--) {
+                    const zombie = zombies[j];
+                    
+                    // 计算距离
+                    const dx = bullet.x - zombie.x;
+                    const dy = bullet.y - zombie.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // 检查碰撞
+                    if (distance < bullet.radius + zombie.radius) {
+                        // 僵尸受伤
+                        zombie.health -= bullet.damage;
+                        
+                        // 创建击中效果粒子
+                        createParticles(zombie.x, zombie.y, zombie.color, bullet.isSniper ? 15 : 8);
+                        
+                        // 如果是狙击枪子弹，有穿透效果（不立即移除子弹）
+                        if (!bullet.isSniper) {
+                            bullets.splice(i, 1);
+                        } else {
+                            // 狙击枪子弹有击退效果
+                            const knockback = 15;
+                            zombie.x += (dx / distance) * knockback;
+                            zombie.y += (dy / distance) * knockback;
+                        }
+                        
+                        // 如果僵尸死亡
+                        if (zombie.health <= 0) {
+                            // 增加分数
+                            score += 10;
+                            zombiesKilled++;
+                            
+                            // 创建死亡效果粒子
+                            createParticles(zombie.x, zombie.y, '#e74c3c', 20);
+                            
+                            // 移除僵尸
+                            zombies.splice(j, 1);
+                            
+                            // 更新UI
+                            updateUI();
+                        }
+                        
+                        if (!bullet.isSniper) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 创建粒子效果
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    velocityX: (Math.random() - 0.5) * 4,
+                    velocityY: (Math.random() - 0.5) * 4,
+                    radius: Math.random() * 3 + 1,
+                    color: color,
+                    life: 1.0,
+                    decay: Math.random() * 0.02 + 0.01
+                });
+            }
+        }
+        
+        // 更新粒子
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                
+                // 更新粒子位置
+                particle.x += particle.velocityX;
+                particle.y += particle.velocityY;
+                
+                // 更新粒子生命周期
+                particle.life -= particle.decay;
+                
+                // 移除死亡的粒子
+                if (particle.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        // 绘制粒子
+        function drawParticles() {
+            for (const particle of particles) {
+                ctx.globalAlpha = particle.life;
+                ctx.fillStyle = particle.color;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+        
+        // ==================== 完善的自救系统 ====================
+        
+        // 检查是否触发自救
+        function checkSelfRescueTrigger() {
+            // 如果已经在自救中，不检查
+            if (selfRescueActive) return;
+            
+            // 无敌状态下不会触发自救
+            if (invincible) return;
+            
+            // 自救冷却时间内不会触发自救
+            if (selfRescueCooldown) return;
+            
+            // 计算距离玩家足够近的僵尸数量
+            nearZombiesCount = 0;
+            
+            for (const zombie of zombies) {
+                const dx = player.x - zombie.x;
+                const dy = player.y - zombie.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < rescueTriggerDistance) {
+                    nearZombiesCount++;
+                }
+            }
+            
+            // 如果足够多的僵尸靠近玩家，触发自救
+            if (nearZombiesCount >= rescueTriggerCount) {
+                startSelfRescue();
+            }
+        }
+        
+        // 开始自救
+        function startSelfRescue() {
+            selfRescueActive = true;
+            currentRescueKeyIndex = 0;
+            currentKeyProgress = 0;
+            selfRescueTimeLeft = selfRescueTimeLimit;
+            
+            // 随机选择两个不同的按键
+            selfRescueKeys = getRandomRescueKeys(2);
+            
+            // 显示自救界面
+            document.getElementById('selfRescueOverlay').style.display = 'flex';
+            updateRescueUI();
+            
+            // 将僵尸速度设置为0，确保自救过程中僵尸不会移动
+            for (const zombie of zombies) {
+                zombie.speed = 0;
+            }
+            
+            // 开始自救计时器
+            selfRescueTimer = setInterval(updateSelfRescue, 100);
+            
+            // 显示提示信息
+            showMessage("被僵尸包围了！按顺序按下提示按键自救！");
+        }
+        
+        // 获取随机自救按键
+        function getRandomRescueKeys(count) {
+            const keys = [];
+            const availableKeys = [...rescueKeysOptions];
+            
+            for (let i = 0; i < count; i++) {
+                const randomIndex = Math.floor(Math.random() * availableKeys.length);
+                keys.push(availableKeys[randomIndex]);
+                availableKeys.splice(randomIndex, 1); // 确保不重复
+            }
+            
+            return keys;
+        }
+        
+        // 更新自救状态
+        function updateSelfRescue() {
+            // 减少剩余时间
+            selfRescueTimeLeft -= 0.1;
+            
+            // 更新UI
+            updateRescueUI();
+            
+            // 检查是否超时
+            if (selfRescueTimeLeft <= 0) {
+                selfRescueFailed();
+            }
+            
+            // 检查是否完成自救
+            if (currentRescueKeyIndex >= selfRescueKeys.length) {
+                selfRescueSuccess();
+            }
+        }
+        
+        // 更新自救UI
+        function updateRescueUI() {
+            // 更新按键显示
+            document.getElementById('rescueKey1').textContent = selfRescueKeys[0];
+            document.getElementById('rescueKey2').textContent = selfRescueKeys[1];
+            
+            // 更新按键状态
+            const key1Element = document.getElementById('rescueKey1');
+            const key2Element = document.getElementById('rescueKey2');
+            
+            // 重置状态
+            key1Element.className = "rescue-key";
+            key2Element.className = "rescue-key";
+            
+            // 设置当前按键状态
+            if (currentRescueKeyIndex === 0) {
+                key1Element.classList.add("active");
+            } else if (currentRescueKeyIndex === 1) {
+                key1Element.classList.add("completed");
+                key2Element.classList.add("active");
+            } else if (currentRescueKeyIndex >= 2) {
+                key1Element.classList.add("completed");
+                key2Element.classList.add("completed");
+            }
+            
+            // 更新进度条
+            const totalProgress = currentRescueKeyIndex * selfRescueRequired + currentKeyProgress;
+            const totalRequired = selfRescueKeys.length * selfRescueRequired;
+            const progressPercent = (totalProgress / totalRequired) * 100;
+            document.getElementById('rescueProgressFill').style.width = `${progressPercent}%`;
+            
+            // 更新计时器
+            document.getElementById('rescueTimer').textContent = selfRescueTimeLeft.toFixed(1);
+            
+            // 更新计数器
+            document.getElementById('rescueCounter').textContent = 
+                `当前按键: ${currentKeyProgress} / ${selfRescueRequired}`;
+        }
+        
+        // 处理自救按键输入
+        function handleSelfRescueKey(key) {
+            // 如果不是自救状态，不处理
+            if (!selfRescueActive) return;
+            
+            // 如果已经完成所有按键，不处理
+            if (currentRescueKeyIndex >= selfRescueKeys.length) return;
+            
+            // 检查按键是否正确
+            const keyUpper = key.toUpperCase();
+            const currentKey = selfRescueKeys[currentRescueKeyIndex];
+            
+            if (keyUpper === currentKey) {
+                // 正确按键，增加进度
+                currentKeyProgress++;
+                
+                // 播放成功音效（视觉反馈）
+                createParticles(
+                    canvas.width / 2 + (currentRescueKeyIndex === 0 ? -80 : 80),
+                    canvas.height / 2 - 30,
+                    '#2ecc71',
+                    5
+                );
+                
+                // 检查是否完成当前按键
+                if (currentKeyProgress >= selfRescueRequired) {
+                    // 移动到下一个按键
+                    currentRescueKeyIndex++;
+                    currentKeyProgress = 0;
+                    
+                    // 增加时间奖励（完成一个按键增加1秒）
+                    selfRescueTimeLeft = Math.min(selfRescueTimeLimit, selfRescueTimeLeft + 1.0);
+                    
+                    // 显示提示
+                    if (currentRescueKeyIndex < selfRescueKeys.length) {
+                        showMessage(`很好！现在按 ${selfRescueKeys[currentRescueKeyIndex]} 键`);
+                    }
+                }
+                
+                // 更新UI
+                updateRescueUI();
+            } else {
+                // 错误按键，减少时间惩罚
+                selfRescueTimeLeft -= 0.3;
+                
+                // 播放错误音效（视觉反馈）
+                createParticles(
+                    canvas.width / 2,
+                    canvas.height / 2 - 30,
+                    '#e74c3c',
+                    5
+                );
+                
+                // 显示错误提示
+                showMessage(`按错了！应该是 ${currentKey}`);
+            }
+        }
+        
+        // 自救成功
+        function selfRescueSuccess() {
+            // 清除计时器
+            clearInterval(selfRescueTimer);
+            
+            // 隐藏自救界面
+            document.getElementById('selfRescueOverlay').style.display = 'none';
+            
+            // 重置自救状态
+            selfRescueActive = false;
+            
+            // 激活无敌时间
+            activateInvincible(invincibleDuration);
+            
+            // 启动自救冷却时间
+            selfRescueCooldown = true;
+            selfRescueCooldownTimeLeft = selfRescueCooldownTime;
+            
+            // 将附近的僵尸击退
+            for (const zombie of zombies) {
+                const dx = zombie.x - player.x;
+                const dy = zombie.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < rescueTriggerDistance * 2) {
+                    // 击退僵尸
+                    const knockback = 40;
+                    zombie.x += (dx / distance) * knockback;
+                    zombie.y += (dy / distance) * knockback;
+                }
+            }
+            
+            // 显示成功信息
+            showMessage("自救成功！获得4秒无敌时间！5秒内不会再次触发自救！");
+            
+            // 恢复僵尸速度
+            for (const zombie of zombies) {
+                zombie.speed = zombie.originalSpeed;
+            }
+            
+            // 创建成功效果粒子
+            createParticles(player.x, player.y, '#2ecc71', 30);
+        }
+        
+        // 激活无敌时间
+        function activateInvincible(duration) {
+            invincible = true;
+            invincibleTimeLeft = duration;
+            document.getElementById('invincibleIndicator').innerHTML = 
+                `无敌时间: ${invincibleTimeLeft.toFixed(1)}秒`;
+        }
+        
+        // 自救失败
+        function selfRescueFailed() {
+            // 清除计时器
+            clearInterval(selfRescueTimer);
+            
+            // 隐藏自救界面
+            document.getElementById('selfRescueOverlay').style.display = 'none';
+            
+            // 重置自救状态
+            selfRescueActive = false;
+            
+            // 扣除50生命值
+            health -= 50;
+            
+            // 显示失败信息
+            showMessage("自救失败！损失50点生命值！");
+            
+            // 恢复僵尸速度
+            for (const zombie of zombies) {
+                zombie.speed = zombie.originalSpeed;
+            }
+            
+            // 创建失败效果粒子
+            createParticles(player.x, player.y, '#e74c3c', 20);
+            
+            // 更新UI
+            updateUI();
+            
+            // 检查游戏结束
+            if (health <= 0) {
+                health = 0;
+                gameOver = true;
+                showGameOver();
+                return;
+            }
+        }
+        
+        // 下一波僵尸
+        function nextWave() {
+            wave++;
+
+            // 每波增加僵尸数量
+            zombiesInWave = 10 + Math.floor(wave * 1.5);
+
+            // 生成新一波僵尸
+            spawnZombies();
+
+            // 显示波次信息
+            showWaveMessage();
+
+            // 每过一波恢复少量生命值
+            health = Math.min(maxHealth, health + 10);
+            updateUI();
+
+            // 每波结算后静默自动存档（意外关闭页面也能从本波开头继续）
+            saveGameProgress();
+        }
+        
+        // 显示波次信息
+        function showWaveMessage() {
+            const waveIndicator = document.getElementById('waveIndicator');
+            const originalText = waveIndicator.innerHTML;
+            
+            waveIndicator.style.fontSize = '20px';
+            waveIndicator.style.color = '#ffcc00';
+            waveIndicator.style.backgroundColor = 'rgba(139, 0, 0, 0.8)';
+            waveIndicator.innerHTML = `第 ${wave} 波！`;
+            
+            setTimeout(() => {
+                waveIndicator.style.fontSize = '';
+                waveIndicator.style.color = '';
+                waveIndicator.style.backgroundColor = '';
+                waveIndicator.innerHTML = originalText;
+            }, 2000);
+        }
+        
+        // 更新UI
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('health').textContent = Math.floor(health);
+            
+            // 根据当前武器显示弹药
+            if (currentWeapon.type === "sniper") {
+                document.getElementById('ammo').textContent = sniperAmmo;
+            } else {
+                document.getElementById('ammo').textContent = ammo;
+            }
+            
+            document.getElementById('wave').textContent = wave;
+            
+            // 更新商店物品状态
+            updateShopItems();
+        }
+        
+        // 生成商店物品
+        function generateShopItems() {
+            const shopItems = document.getElementById('shopItems');
+            if (!shopItems) return;
+            
+            shopItems.innerHTML = '';
+            
+            // 添加武器
+            weapons.forEach(weapon => {
+                if (weapon.id === 1) return; // 跳过默认武器
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `shop-item ${weapon.unlocked ? '' : 'disabled'}`;
+                itemDiv.dataset.id = weapon.id;
+                itemDiv.dataset.type = 'weapon';
+                itemDiv.dataset.shortcut = weapon.shortcut;
+                
+                let weaponInfo = `伤害: ${weapon.damage}`;
+                if (weapon.type === "sniper") {
+                    weaponInfo += ` | 弹容: ${weapon.magazineSize}发 | 装填: 1.5秒`;
+                } else {
+                    weaponInfo += ` | 射速: ${Math.round(1000/weapon.shotDelay)}/秒`;
+                }
+                
+                itemDiv.innerHTML = `
+                    <div class="item-name">
+                        <span>${weapon.name}</span>
+                        <span class="shortcut-key">${weapon.shortcut}</span>
+                    </div>
+                    <div class="item-description">${weapon.description}</div>
+                    <div class="item-cost">
+                        <span>${weaponInfo}</span>
+                        <span class="cost">${weapon.cost} 积分</span>
+                    </div>
+                `;
+                
+                itemDiv.addEventListener('click', () => {
+                    if (!weapon.unlocked && score >= weapon.cost) {
+                        buyWeapon(weapon.id);
+                    } else if (weapon.unlocked) {
+                        equipWeapon(weapon.id);
+                    }
+                });
+                
+                shopItems.appendChild(itemDiv);
+            });
+            
+            // 添加升级
+            upgrades.forEach(upgrade => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'shop-item';
+                itemDiv.dataset.id = upgrade.id;
+                itemDiv.dataset.type = 'upgrade';
+                itemDiv.dataset.shortcut = upgrade.shortcut;
+                
+                itemDiv.innerHTML = `
+                    <div class="item-name">
+                        <span>${upgrade.name}</span>
+                        <span class="shortcut-key">${upgrade.shortcut}</span>
+                    </div>
+                    <div class="item-description">${upgrade.description}</div>
+                    <div class="item-cost">
+                        <span class="cost">${upgrade.cost} 积分</span>
+                    </div>
+                `;
+                
+                itemDiv.addEventListener('click', () => {
+                    buyUpgrade(upgrade.id);
+                });
+                
+                shopItems.appendChild(itemDiv);
+            });
+        }
+        
+        // 更新商店物品状态
+        function updateShopItems() {
+            const items = document.querySelectorAll('.shop-item');
+            
+            items.forEach(item => {
+                const id = parseInt(item.dataset.id);
+                const type = item.dataset.type;
+                
+                if (type === 'weapon') {
+                    const weapon = weapons.find(w => w.id === id);
+                    if (weapon) {
+                        // 检查是否已解锁
+                        if (weapon.unlocked) {
+                            item.classList.remove('disabled');
+                            // 如果是当前装备的武器，高亮显示
+                            if (currentWeapon.id === id) {
+                                item.style.borderColor = '#ffcc00';
+                                item.style.boxShadow = '0 0 5px #ffcc00';
+                            } else {
+                                item.style.borderColor = '#8b0000';
+                                item.style.boxShadow = 'none';
+                            }
+                        } else {
+                            item.classList.add('disabled');
+                            // 检查是否可以购买
+                            if (score >= weapon.cost) {
+                                item.classList.remove('disabled');
+                            }
+                        }
+                    }
+                } else if (type === 'upgrade') {
+                    // 检查升级是否可以购买
+                    const upgrade = upgrades.find(u => u.id === id);
+                    if (upgrade) {
+                        if (score >= upgrade.cost) {
+                            item.classList.remove('disabled');
+                        } else {
+                            item.classList.add('disabled');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 购买武器
+        function buyWeapon(weaponId) {
+            const weapon = weapons.find(w => w.id === weaponId);
+            
+            if (weapon && !weapon.unlocked && score >= weapon.cost) {
+                score -= weapon.cost;
+                weapon.unlocked = true;
+                equipWeapon(weaponId);
+                updateUI();
+                
+                // 显示购买成功消息
+                showMessage(`已解锁 ${weapon.name}!`);
+            }
+        }
+        
+        // 装备武器
+        function equipWeapon(weaponId) {
+            const weapon = weapons.find(w => w.id === weaponId);
+            
+            if (weapon && weapon.unlocked) {
+                currentWeapon = weapon;
+                shotDelay = weapon.shotDelay;
+                player.weapon = weapon;
+                
+                // 狙击枪特殊处理
+                if (weapon.type === "sniper") {
+                    isSniperMode = true;
+                    document.getElementById('scopeOverlay').style.display = 'block';
+                    sniperAmmo = weapon.magazineSize || sniperMaxAmmo;
+                    sniperReloading = false;
+                    document.getElementById('reloadIndicator').style.display = 'none';
+                } else {
+                    isSniperMode = false;
+                    document.getElementById('scopeOverlay').style.display = 'none';
+                    document.getElementById('reloadIndicator').style.display = 'none';
+                }
+                
+                updateShopItems();
+                updateUI();
+                
+                // 显示装备消息
+                showMessage(`已装备 ${weapon.name}`);
+            }
+        }
+        
+        // 购买升级
+        function buyUpgrade(upgradeId) {
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            
+            if (upgrade && score >= upgrade.cost) {
+                score -= upgrade.cost;
+                
+                switch(upgrade.type) {
+                    case 'health':
+                        health = Math.min(maxHealth, health + 50);
+                        showMessage('生命值恢复了50点！');
+                        break;
+                    case 'ammo':
+                        if (currentWeapon.type === "sniper") {
+                            sniperAmmo = sniperMaxAmmo;
+                            showMessage('狙击枪弹药已补充！');
+                        } else {
+                            ammo = maxAmmo;
+                            showMessage('弹药已补充！');
+                        }
+                        break;
+                    case 'maxHealth':
+                        maxHealth += 20;
+                        health += 20;
+                        showMessage('生命上限增加了20点！');
+                        break;
+                    case 'speed':
+                        player.speed += 0.5;
+                        showMessage('移动速度增加了！');
+                        break;
+                    case 'invincible':
+                        activateInvincible(3); // 3秒无敌
+                        showMessage('获得3秒无敌时间！');
+                        break;
+                }
+                
+                updateUI();
+            }
+        }
+        
+        // 通过快捷键购买商店物品
+        function buyWithShortcut(shortcutNumber) {
+            // 查找对应的商店物品
+            const items = document.querySelectorAll('.shop-item');
+            let targetItem = null;
+            
+            for (const item of items) {
+                const itemShortcut = parseInt(item.dataset.shortcut);
+                if (itemShortcut === shortcutNumber && !item.classList.contains('disabled')) {
+                    targetItem = item;
+                    break;
+                }
+            }
+            
+            if (targetItem) {
+                const id = parseInt(targetItem.dataset.id);
+                const type = targetItem.dataset.type;
+                
+                if (type === 'weapon') {
+                    const weapon = weapons.find(w => w.id === id);
+                    if (weapon && !weapon.unlocked && score >= weapon.cost) {
+                        buyWeapon(id);
+                    } else if (weapon && weapon.unlocked) {
+                        equipWeapon(id);
+                    }
+                } else if (type === 'upgrade') {
+                    buyUpgrade(id);
+                }
+            }
+        }
+        
+        // 重新装弹
+        function reload() {
+            if (currentWeapon.type === "sniper") {
+                // 狙击枪装填
+                if (sniperAmmo < sniperMaxAmmo && !sniperReloading) {
+                    sniperReloading = true;
+                    sniperReloadStartTime = Date.now();
+                    showMessage("狙击枪装填中...");
+                }
+            } else {
+                // 普通武器装填
+                if (ammo < maxAmmo) {
+                    ammo = maxAmmo;
+                    updateUI();
+                    showMessage('弹药已装填！');
+                }
+            }
+        }
+        
+        // 显示临时消息
+        function showMessage(text) {
+            const message = document.createElement('div');
+            message.style.position = 'absolute';
+            message.style.top = '50%';
+            message.style.left = '50%';
+            message.style.transform = 'translate(-50%, -50%)';
+            message.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            message.style.color = '#ffcc00';
+            message.style.padding = '10px 20px';
+            message.style.borderRadius = '5px';
+            message.style.zIndex = '1000';
+            message.style.fontSize = '18px';
+            message.textContent = text;
+            
+            document.getElementById('gameArea').appendChild(message);
+            
+            setTimeout(() => {
+                message.remove();
+            }, 1500);
+        }
+        
+        // 显示游戏结束
+        function showGameOver() {
+            // 角色死亡：清除存档，避免继续到一个已经死亡的局
+            clearSavedGame();
+            checkForSavedGame();
+            resetStorageDevice();
+
+            document.getElementById('finalWave').textContent = wave;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameMessage').style.display = 'block';
+        }
+        
+        // 事件监听器
+        function setupEventListeners() {
+            document.getElementById('authForm').addEventListener('submit', submitAuth);
+            document.getElementById('authModeButton').addEventListener('click', () => {
+                setAuthMode(authMode === 'login' ? 'register' : 'login');
+            });
+            document.getElementById('logoutButton').addEventListener('click', async () => {
+                let logoutMessage = '';
+                try {
+                    await apiRequest('/api/logout', { method: 'POST' });
+                } catch (error) {
+                    console.warn('服务端退出登录失败:', error);
+                    logoutMessage = '退出请求未能送达服务器';
+                }
+                currentUser = null;
+                cachedSaveData = null;
+                gameStarted = false;
+                paused = false;
+                setAuthMode('login');
+                document.getElementById('authForm').reset();
+                document.getElementById('authPanel').style.display = 'block';
+                document.getElementById('gameMenu').style.display = 'none';
+                document.getElementById('authMessage').textContent = logoutMessage;
+                toggleMainMenu(true);
+                checkForSavedGame();
+            });
+
+            // 主菜单按钮事件
+            document.getElementById('startNewGameButton').addEventListener('click', () => {
+                startNewGame();
+            });
+            
+            document.getElementById('continueGameButton').addEventListener('click', () => {
+                // 只有当按钮没有被禁用时才继续游戏
+                if (!document.getElementById('continueGameButton').classList.contains('disabled')) {
+                    continueGame();
+                }
+            });
+            
+            // 暂停界面按钮事件
+            document.getElementById('continueButton').addEventListener('click', () => {
+                togglePause(); // 直接调用togglePause函数继续游戏
+            });
+            
+            document.getElementById('saveExitButton').addEventListener('click', async () => {
+                // 禁用按钮防止重复点击
+                const button = document.getElementById('saveExitButton');
+                button.disabled = true;
+                button.textContent = '保存中...';
+
+                // 先保存游戏
+                const saveSuccess = await saveGameProgress();
+
+                if (saveSuccess) {
+                    // 保存成功后播放存储装置动画，动画结束再返回主菜单
+                    animateStorageDevice(() => {
+                        returnToMainMenu();
+                        button.disabled = false;
+                        button.textContent = '保存并退出';
+                    });
+                } else {
+                    // 保存失败时停留在此局，提示重试
+                    showMessage('保存失败，请重试！');
+                    button.disabled = false;
+                    button.textContent = '保存并退出';
+                }
+            });
+            
+            // 键盘事件
+            window.addEventListener('keydown', (e) => {
+                keys[e.key] = true;
+
+                // 自救状态下只处理自救按键
+                if (selfRescueActive) {
+                    handleSelfRescueKey(e.key);
+                    return;
+                }
+
+                // ESC键暂停/继续游戏（仅在对局进行中、且不在自救环节时生效，
+                // 防止自救中暂停导致倒计时偷偷走完；暂停时也要靠它恢复）
+                if (e.key === 'Escape' && gameStarted && !gameOver) {
+                    togglePause();
+                    return;
+                }
+
+                // 以下操作只在对局正常进行时响应（主菜单/暂停/死亡时忽略）
+                if (!gameStarted || gameOver || paused) return;
+
+                // R键重新装弹
+                if (e.key === 'r' || e.key === 'R') {
+                    reload();
+                }
+
+                // 数字键快捷键购买
+                if (e.key >= '1' && e.key <= '9') {
+                    const shortcutNumber = parseInt(e.key);
+                    buyWithShortcut(shortcutNumber);
+                }
+
+                // 0键购买无敌护盾
+                if (e.key === '0') {
+                    buyWithShortcut(0);
+                }
+            });
+            
+            window.addEventListener('keyup', (e) => {
+                keys[e.key] = false;
+            });
+            
+            // 鼠标移动事件
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            });
+            
+            // 鼠标点击事件（射击）
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0 && !selfRescueActive && !gameOver) { // 左键，且不在自救状态和游戏结束状态
+                    createBullet();
+                    
+                    // 设置连续射击（仅对快速武器有效）
+                    if (currentWeapon.shotDelay < 200 && currentWeapon.type !== "sniper") {
+                        const shootInterval = setInterval(() => {
+                            // 检查多重条件以避免边缘情况问题
+                            if (!gameOver && !selfRescueActive && 
+                                !sniperReloading && currentWeapon.type !== "sniper" && 
+                                (currentWeapon.type === "sniper" ? sniperAmmo > 0 : ammo > currentWeapon.ammoCost)) {
+                                createBullet();
+                            } else {
+                                clearInterval(shootInterval);
+                            }
+                        }, currentWeapon.shotDelay);
+                        
+                        // 停止连续射击
+                        canvas.addEventListener('mouseup', function stopShooting() {
+                            clearInterval(shootInterval);
+                            canvas.removeEventListener('mouseup', stopShooting);
+                        });
+                    }
+                }
+            });
+            
+            // 重新开始按钮
+document.getElementById('restartButton').addEventListener('click', startNewGame);
+            
+            // 防止右键菜单
+            canvas.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+        }
+        
+        // 初始化游戏
+        window.onload = function() {
+            init();
+            setupEventListeners();
+            restoreAccountSession();
+
+            // 启动唯一的游戏循环；开始/继续/读档都只切换状态标志，不再重复启动
+            startGameLoop();
+        };
+    </script>
+</body>
+</html>
