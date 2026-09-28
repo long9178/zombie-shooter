@@ -37,12 +37,11 @@
         }
         
         #gameHeader {
-            background: linear-gradient(to right, #4a0000, #8b0000);
+            background: transparent;
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 3px solid #ffcc00;
         }
         
         #gameTitle {
@@ -79,6 +78,7 @@
         #gameContent {
             display: flex;
             flex: 1;
+            position: relative;
             overflow: hidden;
         }
         
@@ -102,9 +102,51 @@
             flex: 1;
             background-color: rgba(30, 30, 46, 0.9);
             padding: 20px;
-            display: flex;
+            display: none;
             flex-direction: column;
             border-left: 2px solid #8b0000;
+        }
+
+        .wave-intermission #sidebar {
+            display: flex;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: min(360px, calc(100% - 24px));
+            height: min(520px, calc(100% - 24px));
+            max-height: calc(100% - 24px);
+            padding: 16px;
+            z-index: 30;
+            overflow: hidden;
+            border: 2px solid #8b0000;
+        }
+
+        .wave-intermission #controlsInfo {
+            display: none;
+        }
+
+        .wave-intermission #shop {
+            min-height: 0;
+        }
+
+        .wave-intermission #nextWaveButton {
+            flex: 0 0 auto;
+        }
+
+        #nextWaveButton {
+            display: none;
+            margin-top: 14px;
+            padding: 12px;
+            border: 1px solid #ffcc00;
+            background: #8b0000;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .wave-intermission #nextWaveButton {
+            display: block;
         }
         
         #controlsInfo {
@@ -434,6 +476,132 @@
             color: #ddd;
             text-align: center;
         }
+
+        #friendsButton, #friendsClose, .friend-action {
+            padding: 8px 12px;
+            border: 1px solid #ffcc00;
+            background: transparent;
+            color: #ffcc00;
+            cursor: pointer;
+        }
+
+        #friendsButton {
+            margin-left: 8px;
+        }
+
+        #friendsOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 110;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.82);
+        }
+
+        #friendsPanel {
+            width: min(560px, 100%);
+            max-height: min(760px, 90vh);
+            overflow-y: auto;
+            padding: 20px;
+            background: #191922;
+            border: 1px solid #8b0000;
+            border-top: 3px solid #ffcc00;
+            text-align: left;
+        }
+
+        #friendsPanelHeader, .friend-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        #friendsPanel h2, .friend-section h3 {
+            color: #ffcc00;
+        }
+
+        #friendRequestForm {
+            display: flex;
+            gap: 8px;
+            margin: 18px 0 8px;
+        }
+
+        #friendUsername {
+            flex: 1;
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid #555;
+            background: #101014;
+            color: #fff;
+        }
+
+        #friendRequestForm button, .friend-action.primary {
+            padding: 9px 12px;
+            border: 1px solid #ffcc00;
+            background: #6f1010;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #friendSearchResult {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 34px;
+            color: #ddd;
+        }
+
+        #friendSearchResult button {
+            flex-shrink: 0;
+            padding: 8px 10px;
+            border: 1px solid #ffcc00;
+            background: #6f1010;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #friendsMessage {
+            min-height: 20px;
+            color: #ffcc00;
+            font-size: 14px;
+        }
+
+        .friend-section {
+            margin-top: 18px;
+        }
+
+        .friend-section h3 {
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .friend-list {
+            list-style: none;
+            border-top: 1px solid #393942;
+        }
+
+        .friend-row {
+            min-height: 42px;
+            padding: 7px 0;
+            border-bottom: 1px solid #393942;
+            color: #eee;
+            overflow-wrap: anywhere;
+        }
+
+        .friend-actions {
+            display: flex;
+            flex-shrink: 0;
+            gap: 6px;
+        }
+
+        .friend-empty {
+            padding: 10px 0;
+            color: #999;
+            font-size: 14px;
+        }
         
         #menuButtons {
             display: flex;
@@ -741,11 +909,37 @@
                 </form>
             </section>
             <div id="gameMenu" style="display: none;">
-                <div id="accountBar">当前账号：<span id="accountName"></span> <button id="logoutButton" type="button">退出登录</button></div>
+                <div id="accountBar">当前账号：<span id="accountName"></span> <button id="friendsButton" type="button">好友</button> <button id="logoutButton" type="button">退出登录</button></div>
                 <div id="menuButtons">
                 <button id="startNewGameButton">开始新游戏</button>
                 <button id="continueGameButton">继续</button>
                 </div>
+            </div>
+            <div id="friendsOverlay" role="presentation">
+                <section id="friendsPanel" role="dialog" aria-modal="true" aria-labelledby="friendsTitle">
+                    <div id="friendsPanelHeader">
+                        <h2 id="friendsTitle">好友</h2>
+                        <button id="friendsClose" type="button" aria-label="关闭好友面板">关闭</button>
+                    </div>
+                    <form id="friendRequestForm">
+                        <input id="friendUsername" name="username" type="text" minlength="3" maxlength="20" placeholder="输入玩家账号" autocomplete="off" required>
+                        <button type="submit">搜索玩家</button>
+                    </form>
+                    <div id="friendSearchResult" role="status" aria-live="polite"></div>
+                    <p id="friendsMessage" role="status" aria-live="polite"></p>
+                    <section class="friend-section" aria-labelledby="incomingTitle">
+                        <h3 id="incomingTitle">待处理请求</h3>
+                        <ul id="incomingRequests" class="friend-list"></ul>
+                    </section>
+                    <section class="friend-section" aria-labelledby="outgoingTitle">
+                        <h3 id="outgoingTitle">已发送请求</h3>
+                        <ul id="outgoingRequests" class="friend-list"></ul>
+                    </section>
+                    <section class="friend-section" aria-labelledby="friendListTitle">
+                        <h3 id="friendListTitle">我的好友</h3>
+                        <ul id="friendsList" class="friend-list"></ul>
+                    </section>
+                </section>
             </div>
         </div>
         <div id="gameHeader">
@@ -870,6 +1064,7 @@
                         <!-- 商店物品将通过JavaScript动态生成 -->
                     </div>
                 </div>
+                <button id="nextWaveButton" type="button">开始第 2 波</button>
             </div>
         </div>
     </div>
@@ -894,6 +1089,7 @@ let paused = false; // 暂停状态变量
   let showMainMenu = true; // 控制是否显示主菜单
   let gameStarted = false; // 标记游戏是否已开始
   let gameLoopStarted = false; // 保证游戏循环在页面生命周期内只启动一次
+    let waveIntermission = false;
 
         // ==================== 存档系统常量 ====================
         const LEGACY_SAVE_KEY_PREFIX = 'zombieShooterSave_v1:';
@@ -1314,6 +1510,127 @@ let paused = false; // 暂停状态变量
             }
         }
 
+        function addFriendRow(list, username, emptyText, actions) {
+            if (!username) {
+                const emptyRow = document.createElement('li');
+                emptyRow.className = 'friend-empty';
+                emptyRow.textContent = emptyText;
+                list.appendChild(emptyRow);
+                return;
+            }
+            const row = document.createElement('li');
+            row.className = 'friend-row';
+            const name = document.createElement('span');
+            name.textContent = username;
+            row.appendChild(name);
+            if (actions.length) {
+                const actionGroup = document.createElement('span');
+                actionGroup.className = 'friend-actions';
+                for (const action of actions) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `friend-action${action.primary ? ' primary' : ''}`;
+                    button.textContent = action.label;
+                    button.addEventListener('click', () => runFriendAction(action.endpoint, username));
+                    actionGroup.appendChild(button);
+                }
+                row.appendChild(actionGroup);
+            }
+            list.appendChild(row);
+        }
+
+        function renderFriendList(listId, usernames, emptyText, actionsForUser) {
+            const list = document.getElementById(listId);
+            list.replaceChildren();
+            if (!usernames.length) {
+                addFriendRow(list, '', emptyText, []);
+                return;
+            }
+            for (const username of usernames) addFriendRow(list, username, emptyText, actionsForUser(username));
+        }
+
+        async function refreshFriends() {
+            const result = await apiRequest('/api/friends');
+            renderFriendList('incomingRequests', result.incoming, '暂无待处理请求', () => [
+                { label: '通过', endpoint: '/api/friends/accept', primary: true },
+                { label: '拒绝', endpoint: '/api/friends/reject' }
+            ]);
+            renderFriendList('outgoingRequests', result.outgoing, '暂无已发送请求', () => [
+                { label: '撤回', endpoint: '/api/friends/cancel' }
+            ]);
+            renderFriendList('friendsList', result.friends, '好友列表为空', () => [
+                { label: '移除', endpoint: '/api/friends/remove' }
+            ]);
+        }
+
+        async function searchFriend(username) {
+            const resultElement = document.getElementById('friendSearchResult');
+            resultElement.replaceChildren();
+            const status = document.createElement('span');
+            status.textContent = '正在搜索...';
+            resultElement.appendChild(status);
+            try {
+                const result = await apiRequest(`/api/friends/search?username=${encodeURIComponent(username)}`);
+                resultElement.replaceChildren();
+                if (!result.found) {
+                    status.textContent = '没有找到这个玩家';
+                    resultElement.appendChild(status);
+                    return;
+                }
+
+                const messages = {
+                    self: '这是你自己的账号',
+                    friend: '该玩家已是你的好友',
+                    incoming: '该玩家已向你发送好友请求',
+                    outgoing: '好友请求已发送，等待对方处理',
+                    available: `已找到玩家：${result.username}`
+                };
+                status.textContent = messages[result.relationship] || `已找到玩家：${result.username}`;
+                resultElement.appendChild(status);
+                const action = result.relationship === 'available'
+                    ? { label: '发送请求', endpoint: '/api/friends/request' }
+                    : result.relationship === 'incoming'
+                        ? { label: '通过请求', endpoint: '/api/friends/accept' }
+                        : null;
+                if (action) {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.textContent = action.label;
+                    button.addEventListener('click', () => runFriendAction(action.endpoint, result.username, true));
+                    resultElement.appendChild(button);
+                }
+            } catch (error) {
+                resultElement.replaceChildren();
+                status.textContent = error.message;
+                resultElement.appendChild(status);
+            }
+        }
+
+        async function runFriendAction(endpoint, username, refreshSearch = false) {
+            const message = document.getElementById('friendsMessage');
+            try {
+                await apiRequest(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify({ username })
+                });
+                message.textContent = '操作成功';
+                await refreshFriends();
+                if (refreshSearch) await searchFriend(username);
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        }
+
+        async function openFriendsPanel() {
+            document.getElementById('friendsMessage').textContent = '';
+            document.getElementById('friendsOverlay').style.display = 'flex';
+            try {
+                await refreshFriends();
+            } catch (error) {
+                document.getElementById('friendsMessage').textContent = error.message;
+            }
+        }
+
         // 保存游戏进度到服务端。
         async function saveGameProgress() {
             if (!gameStarted || gameOver || selfRescueActive || !currentUser) return false;
@@ -1373,6 +1690,7 @@ let paused = false; // 暂停状态变量
             zombiesKilled = 0;
             gameOver = false;
             paused = false;
+            setWaveIntermission(false);
             lastShotTime = 0;
 
             // 武器：只保留初始手枪，其余全部锁定
@@ -1553,6 +1871,7 @@ let paused = false; // 暂停状态变量
         function returnToMainMenu() {
             gameStarted = false;
             paused = false;
+            setWaveIntermission(false);
             keys = {}; // 释放所有按键，避免回到菜单后按键状态卡住
             document.getElementById('pauseOverlay').style.display = 'none';
             toggleMainMenu(true);
@@ -1577,6 +1896,7 @@ let paused = false; // 暂停状态变量
             gameOver = false;
             paused = false;
             gameStarted = true;
+            setWaveIntermission(false);
 
             // 隐藏主菜单
             toggleMainMenu(false);
@@ -1607,6 +1927,7 @@ let paused = false; // 暂停状态变量
             gameOver = false;
             paused = false;
             gameStarted = true;
+            setWaveIntermission(false);
 
             toggleMainMenu(false);
 
@@ -1618,7 +1939,7 @@ let paused = false; // 暂停状态变量
         // 游戏主循环（单帧逻辑，自身不再调度；由 gameTick 统一驱动，保证只有一条循环链）
         function gameLoop() {
             // 主菜单 / 游戏结束 / 暂停 时冻结游戏逻辑，画布保留最后一帧
-            if (!gameStarted || gameOver || paused) return;
+            if (!gameStarted || gameOver || paused || waveIntermission) return;
             
             // 更新无敌时间
             updateInvincible();
@@ -1677,12 +1998,15 @@ let paused = false; // 暂停状态变量
             
             // 检查是否进入下一波
             if (!selfRescueActive && zombiesKilled >= zombiesInWave) {
-                nextWave();
+                setWaveIntermission(true);
+                keys = {};
             }
             
             // 更新波次指示器
             document.getElementById('waveIndicator').innerHTML =
-                `波次: ${wave} | 僵尸剩余: ${zombiesInWave - zombiesKilled}`;
+                waveIntermission
+                    ? `第 ${wave} 波完成`
+                    : `波次: ${wave} | 僵尸剩余: ${zombiesInWave - zombiesKilled}`;
         }
 
         // 全局唯一的帧调度器：页面加载后启动一次，贯穿整个页面生命周期
@@ -2596,6 +2920,11 @@ let paused = false; // 暂停状态变量
         
         // 下一波僵尸
         function nextWave() {
+            if (!waveIntermission) return;
+
+            setWaveIntermission(false);
+            paused = false;
+            keys = {};
             wave++;
 
             // 每波增加僵尸数量
@@ -2613,6 +2942,12 @@ let paused = false; // 暂停状态变量
 
             // 每波结算后静默自动存档（意外关闭页面也能从本波开头继续）
             saveGameProgress();
+        }
+
+        function setWaveIntermission(active) {
+            waveIntermission = active;
+            document.getElementById('gameContainer').classList.toggle('wave-intermission', active);
+            document.getElementById('nextWaveButton').textContent = `开始第 ${wave + 1} 波`;
         }
         
         // 显示波次信息
@@ -2941,6 +3276,18 @@ let paused = false; // 暂停状态变量
         // 事件监听器
         function setupEventListeners() {
             document.getElementById('authForm').addEventListener('submit', submitAuth);
+            document.getElementById('friendsButton').addEventListener('click', openFriendsPanel);
+            document.getElementById('friendsClose').addEventListener('click', () => {
+                document.getElementById('friendsOverlay').style.display = 'none';
+            });
+            document.getElementById('friendsOverlay').addEventListener('click', event => {
+                if (event.target.id === 'friendsOverlay') event.currentTarget.style.display = 'none';
+            });
+            document.getElementById('friendRequestForm').addEventListener('submit', async event => {
+                event.preventDefault();
+                const input = document.getElementById('friendUsername');
+                await searchFriend(input.value.trim());
+            });
             document.getElementById('authModeButton').addEventListener('click', () => {
                 setAuthMode(authMode === 'login' ? 'register' : 'login');
             });
@@ -2960,6 +3307,7 @@ let paused = false; // 暂停状态变量
                 document.getElementById('authForm').reset();
                 document.getElementById('authPanel').style.display = 'block';
                 document.getElementById('gameMenu').style.display = 'none';
+                document.getElementById('friendsOverlay').style.display = 'none';
                 document.getElementById('authMessage').textContent = logoutMessage;
                 toggleMainMenu(true);
                 checkForSavedGame();
@@ -2976,6 +3324,8 @@ let paused = false; // 暂停状态变量
                     continueGame();
                 }
             });
+
+            document.getElementById('nextWaveButton').addEventListener('click', nextWave);
             
             // 暂停界面按钮事件
             document.getElementById('continueButton').addEventListener('click', () => {
@@ -3023,6 +3373,16 @@ let paused = false; // 暂停状态变量
                     return;
                 }
 
+                // 结算阶段只允许使用商店快捷键
+                if (gameStarted && !gameOver && waveIntermission) {
+                    if (e.key >= '1' && e.key <= '9') {
+                        buyWithShortcut(parseInt(e.key));
+                    } else if (e.key === '0') {
+                        buyWithShortcut(0);
+                    }
+                    return;
+                }
+
                 // 以下操作只在对局正常进行时响应（主菜单/暂停/死亡时忽略）
                 if (!gameStarted || gameOver || paused) return;
 
@@ -3031,16 +3391,6 @@ let paused = false; // 暂停状态变量
                     reload();
                 }
 
-                // 数字键快捷键购买
-                if (e.key >= '1' && e.key <= '9') {
-                    const shortcutNumber = parseInt(e.key);
-                    buyWithShortcut(shortcutNumber);
-                }
-
-                // 0键购买无敌护盾
-                if (e.key === '0') {
-                    buyWithShortcut(0);
-                }
             });
             
             window.addEventListener('keyup', (e) => {

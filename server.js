@@ -25,7 +25,8 @@ function createEmptyDatabase() {
     return {
         users: Object.create(null),
         saves: Object.create(null),
-        sessions: Object.create(null)
+        sessions: Object.create(null),
+        friendships: Object.create(null)
     };
 }
 
@@ -54,7 +55,8 @@ async function loadDatabase() {
         database = {
             users: asRecord(stored.users),
             saves: asRecord(stored.saves),
-            sessions: asRecord(stored.sessions)
+            sessions: asRecord(stored.sessions),
+            friendships: asRecord(stored.friendships)
         };
     } catch (error) {
         if (error.code !== 'ENOENT') throw error;
@@ -197,6 +199,27 @@ function validSave(save) {
     return save.zombies.length <= 10000;
 }
 
+function getFriendshipState(username) {
+    const stored = database.friendships[username];
+    const state = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+    state.friends = Array.isArray(state.friends) ? state.friends : [];
+    state.incoming = Array.isArray(state.incoming) ? state.incoming : [];
+    state.outgoing = Array.isArray(state.outgoing) ? state.outgoing : [];
+    database.friendships[username] = state;
+    return state;
+}
+
+function friendNames(usernames) {
+    return usernames
+        .map(username => database.users[username]?.username)
+        .filter(Boolean);
+}
+
+function removeUsername(usernames, username) {
+    let index;
+    while ((index = usernames.indexOf(username)) !== -1) usernames.splice(index, 1);
+}
+
 async function handleApi(request, response, url) {
     const origin = request.headers.origin;
     if (origin && new URL(origin).host !== request.headers.host) {
@@ -285,6 +308,108 @@ async function handleApi(request, response, url) {
     if (request.method === 'GET' && url.pathname === '/api/session') {
         const currentSession = await requireSession(request, response);
         if (currentSession) sendJson(response, 200, { user: { username: currentSession.account.username } });
+        return;
+    }
+
+    if (url.pathname.startsWith('/api/friends')) {
+        const currentSession = await requireSession(request, response);
+        if (!currentSession) return;
+        const username = currentSession.session.username;
+        const state = getFriendshipState(username);
+
+        if (request.method === 'GET' && url.pathname === '/api/friends') {
+            sendJson(response, 200, {
+                friends: friendNames(state.friends),
+                incoming: friendNames(state.incoming),
+                outgoing: friendNames(state.outgoing)
+            });
+            return;
+        }
+
+        if (request.method === 'GET' && url.pathname === '/api/friends/search') {
+            const targetName = (url.searchParams.get('username') || '').trim();
+            if (!validUsername(targetName)) {
+                sendError(response, 400, '账号格式无效');
+                return;
+            }
+            const target = targetName.toLowerCase();
+            const account = database.users[target];
+            if (!account) {
+                sendJson(response, 200, { found: false });
+                return;
+            }
+            const other = getFriendshipState(target);
+            let relationship = 'available';
+            if (target === username) relationship = 'self';
+            else if (state.friends.includes(target)) relationship = 'friend';
+            else if (state.incoming.includes(target)) relationship = 'incoming';
+            else if (state.outgoing.includes(target)) relationship = 'outgoing';
+            sendJson(response, 200, {
+                found: true,
+                username: account.username,
+                relationship
+            });
+            return;
+        }
+
+        const actions = {
+            '/api/friends/request': 'request',
+            '/api/friends/accept': 'accept',
+            '/api/friends/reject': 'reject',
+            '/api/friends/cancel': 'cancel',
+            '/api/friends/remove': 'remove'
+        };
+        const action = actions[url.pathname];
+        if (request.method !== 'POST' || !action) {
+            sendError(response, 404, '接口不存在');
+            return;
+        }
+
+        const body = await readJson(request);
+        const targetName = typeof body.username === 'string' ? body.username.trim() : '';
+        if (!validUsername(targetName)) {
+            sendError(response, 400, '账号格式无效');
+            return;
+        }
+        const target = targetName.toLowerCase();
+        if (!database.users[target]) {
+            sendError(response, 404, '未找到该账号');
+            return;
+        }
+        if (target === username) {
+            sendError(response, 400, '不能添加自己为好友');
+            return;
+        }
+
+        await mutateDatabase(async () => {
+            const current = getFriendshipState(username);
+            const other = getFriendshipState(target);
+            if (action === 'request') {
+                if (current.friends.includes(target)) throw Object.assign(new Error('对方已经是你的好友'), { statusCode: 409 });
+                if (current.outgoing.includes(target)) throw Object.assign(new Error('好友请求已发送'), { statusCode: 409 });
+                if (current.incoming.includes(target)) throw Object.assign(new Error('对方已向你发送请求，请在待处理列表中通过'), { statusCode: 409 });
+                current.outgoing.push(target);
+                other.incoming.push(username);
+            } else if (action === 'accept' || action === 'reject') {
+                if (!current.incoming.includes(target)) throw Object.assign(new Error('没有该好友请求'), { statusCode: 404 });
+                removeUsername(current.incoming, target);
+                removeUsername(other.outgoing, username);
+                if (action === 'accept') {
+                    if (!current.friends.includes(target)) current.friends.push(target);
+                    if (!other.friends.includes(username)) other.friends.push(username);
+                }
+            } else if (action === 'cancel') {
+                if (!current.outgoing.includes(target)) throw Object.assign(new Error('没有待撤回的好友请求'), { statusCode: 404 });
+                removeUsername(current.outgoing, target);
+                removeUsername(other.incoming, username);
+            } else {
+                if (!current.friends.includes(target)) throw Object.assign(new Error('对方不在好友列表中'), { statusCode: 404 });
+                removeUsername(current.friends, target);
+                removeUsername(other.friends, username);
+            }
+            await persistDatabase();
+        });
+        sendJson(response, 200, { ok: true });
         return;
     }
 
