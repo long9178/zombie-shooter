@@ -5,7 +5,7 @@ const { promisify } = require('node:util');
 const { randomBytes, scrypt: scryptCallback, timingSafeEqual, createHash } = require('node:crypto');
 
 const scrypt = promisify(scryptCallback);
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
 const PORT = Number(process.env.PORT) || 3000;
 const DATA_DIRECTORY = process.env.DATA_DIRECTORY || path.join(__dirname, 'data');
 const DATABASE_PATH = path.join(DATA_DIRECTORY, 'database.json');
