@@ -16,10 +16,16 @@ const PASSWORD_KEY_LENGTH = 64;
 const AUTH_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_REQUEST_LIMIT = 20;
 const COOKIE_SECURE = process.env.COOKIE_SECURE === 'true';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || '';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 
 let database;
 let mutationQueue = Promise.resolve();
 const authRequestCounts = new Map();
+const coopRooms = new Map();
+const COOP_ROOM_IDLE_MS = 10 * 60 * 1000;
+const COOP_HOST_TIMEOUT_MS = 12000;
+const COOP_ROOM_PLAYER_LIMIT = 4;
 
 function createEmptyDatabase() {
     return {
@@ -154,6 +160,15 @@ function validPassword(password) {
     return typeof password === 'string' && password.length >= 8 && password.length <= 128;
 }
 
+function normalizeRecoveryName(name) {
+    return typeof name === 'string' ? name.trim().normalize('NFKC').toLowerCase() : '';
+}
+
+function validRecoveryName(name) {
+    const normalized = normalizeRecoveryName(name);
+    return normalized.length >= 1 && normalized.length <= 64 && !/[\u0000-\u001f\u007f]/.test(normalized);
+}
+
 function checkAuthRateLimit(request) {
     const clientAddress = request.socket.remoteAddress || 'unknown';
     const now = Date.now();
@@ -173,6 +188,35 @@ async function hashPassword(password, salt) {
     return scrypt(password, salt, PASSWORD_KEY_LENGTH, { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 });
 }
 
+async function ensureAdminAccount() {
+    if (!ADMIN_USERNAME && !ADMIN_PASSWORD) return;
+    if (!validUsername(ADMIN_USERNAME) || !validPassword(ADMIN_PASSWORD)) {
+        throw new Error('管理员引导配置无效：需设置有效的 ADMIN_USERNAME 和至少8位 ADMIN_PASSWORD');
+    }
+
+    const username = ADMIN_USERNAME.trim();
+    const accountKey = username.toLowerCase();
+    await mutateDatabase(async () => {
+        const existing = database.users[accountKey];
+        if (existing) {
+            if (existing.role !== 'admin') {
+                throw new Error('管理员账号名已被普通账号占用，请设置一个未注册的 ADMIN_USERNAME');
+            }
+            return;
+        }
+
+        const salt = randomBytes(16);
+        const passwordHash = await hashPassword(ADMIN_PASSWORD, salt);
+        database.users[accountKey] = {
+            username,
+            salt: salt.toString('hex'),
+            passwordHash: passwordHash.toString('hex'),
+            role: 'admin'
+        };
+        await persistDatabase();
+    });
+}
+
 async function createSession(username, request, response) {
     const token = randomBytes(32).toString('base64url');
     await mutateDatabase(async () => {
@@ -186,7 +230,13 @@ async function createSession(username, request, response) {
         };
         await persistDatabase();
     });
-    sendJson(response, 200, { user: { username: database.users[username].username } }, {
+    sendJson(response, 200, {
+        user: {
+            username: database.users[username].username,
+            recoveryReady: Boolean(database.users[username].recoveryNameHash),
+            isAdmin: database.users[username].role === 'admin'
+        }
+    }, {
         'Set-Cookie': cookieHeader(token, request)
     });
 }
@@ -220,6 +270,36 @@ function removeUsername(usernames, username) {
     while ((index = usernames.indexOf(username)) !== -1) usernames.splice(index, 1);
 }
 
+function cleanCoopRooms() {
+    const now = Date.now();
+    for (const [code, room] of coopRooms) {
+        if (now - room.lastActiveAt > COOP_ROOM_IDLE_MS || now - room.hostLastActiveAt > COOP_HOST_TIMEOUT_MS) {
+            coopRooms.delete(code);
+        }
+    }
+}
+
+function createCoopRoom(host, invitedUsers) {
+    cleanCoopRooms();
+    let code;
+    do {
+        code = randomBytes(6).toString('hex').toUpperCase();
+    } while (coopRooms.has(code));
+    const room = {
+        code,
+        host,
+        members: new Set([host]),
+        invited: new Set(invitedUsers),
+        players: new Map(),
+        shots: [],
+        state: null,
+        lastActiveAt: Date.now(),
+        hostLastActiveAt: Date.now()
+    };
+    coopRooms.set(code, room);
+    return room;
+}
+
 async function handleApi(request, response, url) {
     const origin = request.headers.origin;
     if (origin && new URL(origin).host !== request.headers.host) {
@@ -227,7 +307,7 @@ async function handleApi(request, response, url) {
         return;
     }
 
-    if (request.method === 'POST' && (url.pathname === '/api/register' || url.pathname === '/api/login')) {
+    if (request.method === 'POST' && ['/api/register', '/api/login', '/api/reset-password'].includes(url.pathname)) {
         const retryAfter = checkAuthRateLimit(request);
         if (retryAfter) {
             sendError(response, 429, '操作过于频繁，请稍后再试', { 'Retry-After': String(retryAfter) });
@@ -239,6 +319,7 @@ async function handleApi(request, response, url) {
         const body = await readJson(request);
         const username = typeof body.username === 'string' ? body.username.trim() : '';
         const password = body.password;
+        const recoveryName = body.recoveryName;
         if (!validUsername(username)) {
             sendError(response, 400, '账号需为3-20位中文、字母、数字或下划线');
             return;
@@ -247,16 +328,25 @@ async function handleApi(request, response, url) {
             sendError(response, 400, '密码长度需为8-128位');
             return;
         }
+        if (!validRecoveryName(recoveryName)) {
+            sendError(response, 400, '请输入有效的好友名称（1-64位）');
+            return;
+        }
 
         const accountKey = username.toLowerCase();
         const created = await mutateDatabase(async () => {
             if (Object.prototype.hasOwnProperty.call(database.users, accountKey)) return false;
             const salt = randomBytes(16);
             const passwordHash = await hashPassword(password, salt);
+            const recoveryNameSalt = randomBytes(16);
+            const recoveryNameHash = await hashPassword(normalizeRecoveryName(recoveryName), recoveryNameSalt);
             database.users[accountKey] = {
                 username,
                 salt: salt.toString('hex'),
-                passwordHash: passwordHash.toString('hex')
+                passwordHash: passwordHash.toString('hex'),
+                recoveryNameSalt: recoveryNameSalt.toString('hex'),
+                recoveryNameHash: recoveryNameHash.toString('hex'),
+                role: 'player'
             };
             await persistDatabase();
             return true;
@@ -266,6 +356,66 @@ async function handleApi(request, response, url) {
             return;
         }
         await createSession(accountKey, request, response);
+        return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/reset-password') {
+        const body = await readJson(request);
+        const username = typeof body.username === 'string' ? body.username.trim() : '';
+        const recoveryName = body.recoveryName;
+        const newPassword = body.newPassword;
+        const accountKey = username.toLowerCase();
+        const account = validUsername(username) ? database.users[accountKey] : null;
+        if (!account || !account.recoveryNameSalt || !account.recoveryNameHash ||
+            !validRecoveryName(recoveryName) || !validPassword(newPassword)) {
+            sendError(response, 400, '账号、好友名称或新密码不正确');
+            return;
+        }
+
+        const suppliedHash = await hashPassword(
+            normalizeRecoveryName(recoveryName),
+            Buffer.from(account.recoveryNameSalt, 'hex')
+        );
+        const storedHash = Buffer.from(account.recoveryNameHash, 'hex');
+        if (suppliedHash.length !== storedHash.length || !timingSafeEqual(suppliedHash, storedHash)) {
+            sendError(response, 400, '账号、好友名称或新密码不正确');
+            return;
+        }
+
+        const passwordSalt = randomBytes(16);
+        const passwordHash = await hashPassword(newPassword, passwordSalt);
+        await mutateDatabase(async () => {
+            database.users[accountKey].salt = passwordSalt.toString('hex');
+            database.users[accountKey].passwordHash = passwordHash.toString('hex');
+            for (const [hash, session] of Object.entries(database.sessions)) {
+                if (session?.username === accountKey) delete database.sessions[hash];
+            }
+            await persistDatabase();
+        });
+        sendJson(response, 200, { ok: true });
+        return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/recovery-name') {
+        const currentSession = await requireSession(request, response);
+        if (!currentSession) return;
+        const body = await readJson(request);
+        if (!validRecoveryName(body.recoveryName)) {
+            sendError(response, 400, '请输入有效的好友名称（1-64位）');
+            return;
+        }
+        const recoveryNameSalt = randomBytes(16);
+        const recoveryNameHash = await hashPassword(
+            normalizeRecoveryName(body.recoveryName),
+            recoveryNameSalt
+        );
+        await mutateDatabase(async () => {
+            const account = database.users[currentSession.session.username];
+            account.recoveryNameSalt = recoveryNameSalt.toString('hex');
+            account.recoveryNameHash = recoveryNameHash.toString('hex');
+            await persistDatabase();
+        });
+        sendJson(response, 200, { ok: true });
         return;
     }
 
@@ -307,7 +457,94 @@ async function handleApi(request, response, url) {
 
     if (request.method === 'GET' && url.pathname === '/api/session') {
         const currentSession = await requireSession(request, response);
-        if (currentSession) sendJson(response, 200, { user: { username: currentSession.account.username } });
+        if (currentSession) sendJson(response, 200, {
+            user: {
+                username: currentSession.account.username,
+                recoveryReady: Boolean(currentSession.account.recoveryNameHash),
+                isAdmin: currentSession.account.role === 'admin'
+            }
+        });
+        return;
+    }
+
+    if (url.pathname.startsWith('/api/admin/')) {
+        const currentSession = await requireSession(request, response);
+        if (!currentSession) return;
+        if (currentSession.account.role !== 'admin') {
+            sendError(response, 403, '需要管理员权限');
+            return;
+        }
+
+        if (request.method === 'GET' && url.pathname === '/api/admin/users') {
+            const users = Object.values(database.users)
+                .map(account => ({
+                    username: account.username,
+                    role: account.role === 'admin' ? 'admin' : 'player'
+                }))
+                .sort((left, right) => left.username.localeCompare(right.username, 'zh-CN'));
+            sendJson(response, 200, { users });
+            return;
+        }
+
+        const deleteMatch = request.method === 'DELETE'
+            ? url.pathname.match(/^\/api\/admin\/users\/([^/]+)$/)
+            : null;
+        if (!deleteMatch) {
+            sendError(response, 404, '管理员接口不存在');
+            return;
+        }
+
+        let targetName;
+        try {
+            targetName = decodeURIComponent(deleteMatch[1]).trim();
+        } catch (error) {
+            sendError(response, 400, '账号格式无效');
+            return;
+        }
+        if (!validUsername(targetName)) {
+            sendError(response, 400, '账号格式无效');
+            return;
+        }
+        const target = targetName.toLowerCase();
+        if (target === currentSession.session.username) {
+            sendError(response, 400, '不能删除当前管理员账号');
+            return;
+        }
+        const targetAccount = database.users[target];
+        if (!targetAccount) {
+            sendError(response, 404, '账号不存在');
+            return;
+        }
+        if (targetAccount.role === 'admin') {
+            sendError(response, 403, '不能删除其他管理员账号');
+            return;
+        }
+
+        await mutateDatabase(async () => {
+            delete database.users[target];
+            delete database.saves[target];
+            delete database.friendships[target];
+            for (const [hash, session] of Object.entries(database.sessions)) {
+                if (session?.username === target) delete database.sessions[hash];
+            }
+            for (const friendship of Object.values(database.friendships)) {
+                for (const field of ['friends', 'incoming', 'outgoing']) {
+                    if (Array.isArray(friendship[field])) removeUsername(friendship[field], target);
+                }
+            }
+            await persistDatabase();
+        });
+        for (const [code, room] of coopRooms) {
+            if (room.host === target) {
+                coopRooms.delete(code);
+                continue;
+            }
+            room.members.delete(target);
+            room.invited.delete(target);
+            room.players.delete(target);
+            room.shots = room.shots.filter(shot => shot.owner !== target);
+        }
+        sendJson(response, 200, { ok: true });
         return;
     }
 
@@ -413,6 +650,155 @@ async function handleApi(request, response, url) {
         return;
     }
 
+    if (url.pathname.startsWith('/api/coop/')) {
+        const currentSession = await requireSession(request, response);
+        if (!currentSession) return;
+        const username = currentSession.session.username;
+
+        if (request.method === 'GET' && url.pathname === '/api/coop/invitations') {
+            cleanCoopRooms();
+            const invitations = [];
+            for (const room of coopRooms.values()) {
+                if (room.invited.has(username) && !room.members.has(username)) {
+                    invitations.push({
+                        code: room.code,
+                        host: database.users[room.host]?.username || room.host,
+                        players: room.members.size
+                    });
+                }
+            }
+            sendJson(response, 200, { invitations });
+            return;
+        }
+
+        if (request.method === 'POST' && url.pathname === '/api/coop/rooms') {
+            const body = await readJson(request);
+            const invitedNames = Array.isArray(body.usernames)
+                ? body.usernames.map(name => typeof name === 'string' ? name.trim() : '')
+                : [typeof body.username === 'string' ? body.username.trim() : ''];
+            if (invitedNames.length < 1 || invitedNames.length > COOP_ROOM_PLAYER_LIMIT - 1 ||
+                !invitedNames.every(validUsername)) {
+                sendError(response, 400, '好友账号格式无效');
+                return;
+            }
+            const invitedUsers = [...new Set(invitedNames.map(name => name.toLowerCase()))];
+            const friendship = getFriendshipState(username);
+            if (invitedUsers.some(invited => !friendship.friends.includes(invited))) {
+                sendError(response, 403, '只能邀请好友加入房间');
+                return;
+            }
+            const room = createCoopRoom(username, invitedUsers);
+            sendJson(response, 201, { code: room.code, slot: 0 });
+            return;
+        }
+
+        const roomMatch = url.pathname.match(/^\/api\/coop\/rooms\/([A-F0-9]{12})\/(join|sync|leave)$/);
+        if (!roomMatch || request.method !== 'POST') {
+            sendError(response, 404, '联机接口不存在');
+            return;
+        }
+        const [, code, action] = roomMatch;
+        cleanCoopRooms();
+        const room = coopRooms.get(code);
+        if (!room) {
+            sendError(response, 404, '房间不存在或已过期');
+            return;
+        }
+
+        if (action === 'join') {
+            if (!room.invited.has(username) && !room.members.has(username)) {
+                sendError(response, 403, '此房间仅限受邀好友加入');
+                return;
+            }
+            if (!room.members.has(username) && room.members.size >= COOP_ROOM_PLAYER_LIMIT) {
+                sendError(response, 409, '房间已满');
+                return;
+            }
+            room.members.add(username);
+            room.lastActiveAt = Date.now();
+            sendJson(response, 200, {
+                code,
+                slot: Array.from(room.members).indexOf(username),
+                host: database.users[room.host]?.username || room.host,
+                state: room.state
+            });
+            return;
+        }
+
+        if (!room.members.has(username)) {
+            sendError(response, 403, '你不在此房间中');
+            return;
+        }
+        if (action === 'leave') {
+            if (username === room.host) {
+                coopRooms.delete(code);
+            } else {
+                room.members.delete(username);
+                room.players.delete(username);
+                room.lastActiveAt = Date.now();
+            }
+            sendJson(response, 200, { ok: true });
+            return;
+        }
+
+        const body = await readJson(request);
+        const input = body.input;
+        if (!input || !Number.isFinite(input.x) || !Number.isFinite(input.y) ||
+            !Number.isFinite(input.aimX) || !Number.isFinite(input.aimY)) {
+            sendError(response, 400, '玩家状态无效');
+            return;
+        }
+        const account = database.users[username];
+        room.players.set(username, {
+            id: username,
+            username: account.username,
+            slot: Array.from(room.members).indexOf(username),
+            x: Math.max(-10000, Math.min(10000, input.x)),
+            y: Math.max(-10000, Math.min(10000, input.y)),
+            aimX: Math.max(-10000, Math.min(10000, input.aimX)),
+            aimY: Math.max(-10000, Math.min(10000, input.aimY)),
+            color: typeof input.color === 'string' && /^#[0-9a-f]{6}$/i.test(input.color) ? input.color : '#3498db',
+            invincible: Boolean(input.invincible),
+            health: Math.max(0, Math.min(100000, Number.isFinite(input.health) ? input.health : 100)),
+            maxHealth: Math.max(1, Math.min(100000, Number.isFinite(input.maxHealth) ? input.maxHealth : 100)),
+            ammo: Math.max(0, Math.min(100000, Number.isFinite(input.ammo) ? input.ammo : 0)),
+            maxAmmo: Math.max(1, Math.min(100000, Number.isFinite(input.maxAmmo) ? input.maxAmmo : 30)),
+            sniperAmmo: Math.max(0, Math.min(100000, Number.isFinite(input.sniperAmmo) ? input.sniperAmmo : 0)),
+            sniperMaxAmmo: Math.max(1, Math.min(100000, Number.isFinite(input.sniperMaxAmmo) ? input.sniperMaxAmmo : 5)),
+            weapon: typeof input.weapon === 'string' ? input.weapon.slice(0, 24) : '手枪',
+            score: Math.max(0, Math.min(1e12, Number.isFinite(input.score) ? input.score : 0)),
+            wave: Math.max(1, Math.min(99999, Number.isFinite(input.wave) ? input.wave : 1)),
+            updatedAt: Date.now()
+        });
+        if (username === room.host) room.hostLastActiveAt = Date.now();
+        if (username === room.host && body.state && typeof body.state === 'object' && !Array.isArray(body.state)) {
+            room.state = body.state;
+        }
+        if (Array.isArray(input.shots)) {
+            for (const shot of input.shots.slice(0, 12)) {
+                const fields = ['x', 'y', 'velocityX', 'velocityY', 'radius', 'damage'];
+                if (!fields.every(field => Number.isFinite(shot[field]))) continue;
+                room.shots.push({
+                    x: shot.x,
+                    y: shot.y,
+                    velocityX: shot.velocityX,
+                    velocityY: shot.velocityY,
+                    radius: Math.max(1, Math.min(12, shot.radius)),
+                    damage: Math.max(1, Math.min(500, shot.damage)),
+                    color: shot.isSniper ? '#00ff00' : '#f1c40f',
+                    isSniper: Boolean(shot.isSniper),
+                    owner: username
+                });
+            }
+        }
+        room.lastActiveAt = Date.now();
+        const players = Array.from(room.players.values())
+            .filter(player => room.members.has(player.id) && Date.now() - player.updatedAt < 5000);
+        const shots = username === room.host ? room.shots.splice(0) : [];
+        sendJson(response, 200, { state: room.state, players, shots, host: room.host });
+        return;
+    }
+
     if (url.pathname === '/api/save') {
         const currentSession = await requireSession(request, response);
         if (!currentSession) return;
@@ -486,6 +872,7 @@ async function handleRequest(request, response) {
 
 async function startServer() {
     await loadDatabase();
+    await ensureAdminAccount();
     const server = http.createServer(handleRequest);
     server.listen(PORT, HOST, () => {
         console.log(`游戏服务已启动：http://${HOST}:${PORT}`);

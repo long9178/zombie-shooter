@@ -322,6 +322,114 @@
             font-size: 14px;
             border-left: 3px solid #ffcc00;
         }
+
+        #coopPresence {
+            position: absolute;
+            top: 68px;
+            left: 20px;
+            display: none;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.78);
+            border-left: 3px solid #2ecc71;
+            color: #fff;
+            font-size: 13px;
+            z-index: 10;
+        }
+
+        #coopPlayerHud {
+            position: absolute;
+            inset: 0;
+            display: none;
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        .coop-player-card {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: min(240px, calc(50% - 20px));
+            min-height: 72px;
+            padding: 8px 10px;
+            background: rgba(10, 13, 16, 0.86);
+            border: 1px solid #68727a;
+            border-left: 3px solid #68727a;
+            color: #e8edf0;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .coop-player-card[data-slot="0"] {
+            top: 72px;
+            left: 12px;
+        }
+
+        .coop-player-card[data-slot="1"] {
+            top: 72px;
+            right: 12px;
+        }
+
+        .coop-player-card[data-slot="2"] {
+            bottom: 12px;
+            left: 12px;
+        }
+
+        .coop-player-card[data-slot="3"] {
+            right: 12px;
+            bottom: 12px;
+        }
+
+        .coop-player-card.own-player {
+            border-color: #ffcc00;
+            border-left-color: #ffcc00;
+            box-shadow: inset 0 0 0 1px rgba(255, 204, 0, 0.28), 0 0 12px rgba(255, 204, 0, 0.24);
+        }
+
+        .coop-player-name {
+            color: #fff;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .own-player .coop-player-name {
+            color: #ffcc00;
+        }
+
+        .coop-player-details {
+            color: #c3cbd0;
+            line-height: 1.35;
+        }
+
+        #gameContainer.coop-active #coopPlayerHud {
+            display: block;
+        }
+
+        #gameContainer.coop-active #instructions,
+        #gameContainer.coop-active #storageDevice,
+        #gameContainer.coop-active #invincibleIndicator,
+        #gameContainer.coop-active #cooldownIndicator,
+        #gameContainer.coop-active #reloadIndicator,
+        #gameContainer.coop-active #coopPresence {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            .coop-player-card {
+                min-height: 64px;
+                padding: 6px 7px;
+                font-size: 11px;
+            }
+
+            .coop-player-card[data-slot="0"],
+            .coop-player-card[data-slot="1"] {
+                top: 68px;
+            }
+
+            .coop-player-name {
+                font-size: 12px;
+            }
+        }
         
         #invincibleIndicator {
             position: absolute;
@@ -433,13 +541,13 @@
             text-align: center;
         }
 
-        #authForm {
+        #authForm, #resetPasswordForm, #legacyRecoveryForm {
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
 
-        #authForm input {
+        #authForm input, #resetPasswordForm input, #legacyRecoveryForm input {
             width: 100%;
             padding: 12px;
             border: 1px solid #555;
@@ -449,7 +557,7 @@
             font-size: 16px;
         }
 
-        #authForm button, #authModeButton, #logoutButton {
+        #authForm button, #resetPasswordForm button, #legacyRecoveryForm button, #authModeButton, #authResetButton, #resetBackButton, #logoutButton {
             padding: 11px 14px;
             border: 1px solid #ffcc00;
             border-radius: 4px;
@@ -459,7 +567,7 @@
             cursor: pointer;
         }
 
-        #authModeButton, #logoutButton {
+        #authModeButton, #authResetButton, #resetBackButton, #logoutButton {
             background: transparent;
             color: #ffcc00;
         }
@@ -477,7 +585,7 @@
             text-align: center;
         }
 
-        #friendsButton, #friendsClose, .friend-action {
+        #friendsButton, #coopButton, #adminButton, #friendsClose, #coopClose, #adminClose, .friend-action {
             padding: 8px 12px;
             border: 1px solid #ffcc00;
             background: transparent;
@@ -485,8 +593,173 @@
             cursor: pointer;
         }
 
-        #friendsButton {
+        #friendsButton, #coopButton, #adminButton {
             margin-left: 8px;
+        }
+
+        #adminOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 130;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.86);
+        }
+
+        #adminPanel {
+            width: min(620px, 100%);
+            max-height: min(760px, 90vh);
+            overflow-y: auto;
+            padding: 20px;
+            background: #191922;
+            border: 1px solid #8b0000;
+            border-top: 3px solid #ffcc00;
+        }
+
+        #adminPanelHeader, .admin-user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        #adminPanel h2 {
+            color: #ffcc00;
+        }
+
+        #adminMessage {
+            min-height: 20px;
+            margin: 12px 0;
+            color: #ffcc00;
+            font-size: 14px;
+        }
+
+        #adminUserList {
+            list-style: none;
+            border-top: 1px solid #393942;
+        }
+
+        .admin-user-row {
+            min-height: 46px;
+            padding: 7px 0;
+            border-bottom: 1px solid #393942;
+            color: #eee;
+            overflow-wrap: anywhere;
+        }
+
+        .admin-role {
+            margin-left: auto;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .admin-delete-button {
+            flex-shrink: 0;
+            padding: 7px 10px;
+            border: 1px solid #e74c3c;
+            background: transparent;
+            color: #ff8b80;
+            cursor: pointer;
+        }
+
+        #coopOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.86);
+        }
+
+        #coopPanel {
+            width: min(540px, 100%);
+            max-height: min(720px, 90vh);
+            overflow-y: auto;
+            padding: 20px;
+            background: #191922;
+            border: 1px solid #8b0000;
+            border-top: 3px solid #ffcc00;
+        }
+
+        #coopPanelHeader, #coopRoomInfo, .coop-invitation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        #coopPanel h2, #coopPanel h3 {
+            color: #ffcc00;
+        }
+
+        #coopPanel h3 {
+            margin: 18px 0 8px;
+            font-size: 16px;
+        }
+
+        .coop-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .coop-form input, .coop-form select, #coopShareLink {
+            flex: 1;
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid #555;
+            background: #101014;
+            color: #fff;
+        }
+
+        .coop-form button, #coopRoomInfo button, .coop-invitation button {
+            flex-shrink: 0;
+            padding: 9px 12px;
+            border: 1px solid #ffcc00;
+            background: #6f1010;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #coopMessage {
+            min-height: 20px;
+            margin: 12px 0;
+            color: #ffcc00;
+            font-size: 14px;
+        }
+
+        #coopRoomInfo {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin: 14px 0;
+            padding: 12px;
+            border: 1px solid #494952;
+        }
+
+        #coopShareLink {
+            flex-basis: 100%;
+        }
+
+        #coopInvitations {
+            list-style: none;
+            border-top: 1px solid #393942;
+        }
+
+        .coop-invitation {
+            min-height: 44px;
+            padding: 6px 0;
+            border-bottom: 1px solid #393942;
+            color: #eee;
+        }
+
+        .coop-empty {
+            padding: 10px 0;
+            color: #999;
+            font-size: 14px;
         }
 
         #friendsOverlay {
@@ -903,13 +1176,29 @@
                 <form id="authForm">
                     <input id="authUsername" name="username" type="text" placeholder="账号（3-20位）" minlength="3" maxlength="20" autocomplete="username" required>
                     <input id="authPassword" name="password" type="password" placeholder="密码（至少8位）" minlength="8" autocomplete="current-password" required>
+                    <input id="authRecoveryName" name="recoveryName" type="text" placeholder="你最好的朋友名称（用于找回密码）" maxlength="64" autocomplete="off" style="display: none;">
                     <button id="authSubmitButton" type="submit">登录</button>
                     <button id="authModeButton" type="button">创建新账号</button>
+                    <button id="authResetButton" type="button">忘记密码</button>
                     <p id="authMessage" role="status" aria-live="polite"></p>
+                </form>
+                <form id="resetPasswordForm" style="display: none;">
+                    <input id="resetUsername" name="username" type="text" placeholder="账号" minlength="3" maxlength="20" autocomplete="username" required>
+                    <input id="resetRecoveryName" name="recoveryName" type="text" placeholder="你最好的朋友名称" maxlength="64" autocomplete="off" required>
+                    <input id="resetNewPassword" name="newPassword" type="password" placeholder="新密码（至少8位）" minlength="8" maxlength="128" autocomplete="new-password" required>
+                    <button id="resetSubmitButton" type="submit">验证并重置密码</button>
+                    <button id="resetBackButton" type="button">返回登录</button>
+                    <p id="resetMessage" role="status" aria-live="polite"></p>
                 </form>
             </section>
             <div id="gameMenu" style="display: none;">
-                <div id="accountBar">当前账号：<span id="accountName"></span> <button id="friendsButton" type="button">好友</button> <button id="logoutButton" type="button">退出登录</button></div>
+                <form id="legacyRecoveryForm" style="display: none;">
+                    <label for="legacyRecoveryName">为此旧账号设置找回验证名称</label>
+                    <input id="legacyRecoveryName" type="text" maxlength="64" autocomplete="off" required>
+                    <button type="submit">保存找回验证</button>
+                    <p id="legacyRecoveryMessage" role="status" aria-live="polite"></p>
+                </form>
+                <div id="accountBar">当前账号：<span id="accountName"></span> <button id="friendsButton" type="button">好友</button> <button id="coopButton" type="button">联机邀请</button> <button id="adminButton" type="button" style="display: none;">玩家管理</button> <button id="logoutButton" type="button">退出登录</button></div>
                 <div id="menuButtons">
                 <button id="startNewGameButton">开始新游戏</button>
                 <button id="continueGameButton">继续</button>
@@ -941,6 +1230,44 @@
                     </section>
                 </section>
             </div>
+        </div>
+        <div id="coopOverlay" role="presentation">
+            <section id="coopPanel" role="dialog" aria-modal="true" aria-labelledby="coopTitle">
+                <div id="coopPanelHeader">
+                    <h2 id="coopTitle">局域网联机</h2>
+                    <button id="coopClose" type="button" aria-label="关闭联机面板">关闭</button>
+                </div>
+                <p id="coopMessage" role="status" aria-live="polite"></p>
+                <form id="coopCreateForm" class="coop-form">
+                    <select id="coopFriendSelect" aria-label="选择好友" size="3" multiple required></select>
+                    <button type="submit">创建房间并邀请</button>
+                </form>
+                <p class="coop-empty">最多选择 3 位好友，房主共 4 人。</p>
+                <div id="coopRoomInfo" style="display: none;">
+                    <strong>房间码：<span id="coopRoomCode"></span></strong>
+                    <button id="coopCopyButton" type="button">复制邀请信息</button>
+                    <button id="coopLeaveButton" type="button">结束房间</button>
+                    <input id="coopShareLink" type="text" readonly aria-label="邀请信息">
+                </div>
+                <form id="coopJoinForm" class="coop-form">
+                    <input id="coopJoinCode" type="text" maxlength="12" pattern="[A-Fa-f0-9]{12}" placeholder="输入 12 位房间码" autocomplete="off" required>
+                    <button type="submit">加入房间</button>
+                </form>
+                <section aria-labelledby="coopInvitationsTitle">
+                    <h3 id="coopInvitationsTitle">收到的邀请</h3>
+                    <ul id="coopInvitations"></ul>
+                </section>
+            </section>
+        </div>
+        <div id="adminOverlay" role="presentation">
+            <section id="adminPanel" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+                <div id="adminPanelHeader">
+                    <h2 id="adminTitle">玩家账号</h2>
+                    <button id="adminClose" type="button" aria-label="关闭玩家管理">关闭</button>
+                </div>
+                <p id="adminMessage" role="status" aria-live="polite"></p>
+                <ul id="adminUserList"></ul>
+            </section>
         </div>
         <div id="gameHeader">
             <div id="gameTitle">僵尸枪战：生存挑战 - 完善自救系统</div>
@@ -992,12 +1319,20 @@
                         <h2>游戏暂停</h2>
                         <div id="pauseButtons">
                             <button id="continueButton">继续游戏</button>
+                            <button id="openCoopFromPause" type="button">邀请好友联机</button>
                             <button id="saveExitButton">保存并退出</button>
                         </div>
                     </div>
                 </div>
                 
                 <div id="waveIndicator">波次: 1 | 僵尸剩余: 10</div>
+                <div id="coopPresence" role="status" aria-live="polite"></div>
+                <div id="coopPlayerHud" aria-label="联机玩家信息">
+                    <section class="coop-player-card" data-slot="0" aria-label="玩家一信息"></section>
+                    <section class="coop-player-card" data-slot="1" aria-label="玩家二信息"></section>
+                    <section class="coop-player-card" data-slot="2" aria-label="玩家三信息"></section>
+                    <section class="coop-player-card" data-slot="3" aria-label="玩家四信息"></section>
+                </div>
                 <div id="invincibleIndicator">无敌时间: 0.0秒</div>
                 <div id="cooldownIndicator">自救冷却: 0.0秒</div>
                 <div id="reloadIndicator">装填中: 1.5秒</div>
@@ -1097,8 +1432,19 @@ let paused = false; // 暂停状态变量
         const LEGACY_USER_KEY = 'zombieShooterCurrentUser_v1';
         const SAVE_VERSION = 1;
         let currentUser = null;
+        let currentUserIsAdmin = false;
         let authMode = 'login';
         let cachedSaveData = null;
+        let coopRoomCode = null;
+        let coopHost = false;
+        let coopPlayerSlot = 0;
+        let coopPlayers = [];
+        let coopHostPaused = false;
+        let coopOutgoingShots = [];
+        let coopSyncTimer = null;
+        let coopInvitationTimer = null;
+        let coopSyncBusy = false;
+        let coopLastError = '';
         let lastShotTime = 0;
         let shotDelay = 300; // 射击延迟（毫秒）
         let keys = {};
@@ -1423,12 +1769,17 @@ let paused = false; // 暂停状态变量
             }
         }
 
-        async function showAccountMenu(username) {
+        async function showAccountMenu(username, recoveryReady = true, isAdmin = false) {
             currentUser = username;
+            currentUserIsAdmin = isAdmin;
             cachedSaveData = null;
             document.getElementById('accountName').textContent = username;
             document.getElementById('authPanel').style.display = 'none';
             document.getElementById('gameMenu').style.display = 'block';
+            document.getElementById('adminButton').style.display = isAdmin ? 'inline-block' : 'none';
+            document.getElementById('legacyRecoveryForm').style.display = recoveryReady ? 'none' : 'flex';
+            await refreshCoopInvitations();
+            if (!coopInvitationTimer) coopInvitationTimer = setInterval(refreshCoopInvitations, 4000);
 
             try {
                 const result = await apiRequest('/api/save');
@@ -1454,17 +1805,26 @@ let paused = false; // 暂停状态变量
         function setAuthMode(mode) {
             authMode = mode;
             const registering = mode === 'register';
-            document.getElementById('authTitle').textContent = registering ? '创建账号' : '账号登录';
+            const resetting = mode === 'reset';
+            document.getElementById('authTitle').textContent = resetting ? '重置密码' : registering ? '创建账号' : '账号登录';
+            document.getElementById('authForm').style.display = resetting ? 'none' : 'flex';
+            document.getElementById('resetPasswordForm').style.display = resetting ? 'flex' : 'none';
             document.getElementById('authSubmitButton').textContent = registering ? '注册并登录' : '登录';
             document.getElementById('authModeButton').textContent = registering ? '返回登录' : '创建新账号';
+            document.getElementById('authModeButton').style.display = resetting ? 'none' : 'block';
+            document.getElementById('authResetButton').style.display = registering || resetting ? 'none' : 'block';
             document.getElementById('authPassword').autocomplete = registering ? 'new-password' : 'current-password';
+            document.getElementById('authRecoveryName').style.display = registering ? 'block' : 'none';
+            document.getElementById('authRecoveryName').required = registering;
             document.getElementById('authMessage').textContent = '';
+            document.getElementById('resetMessage').textContent = '';
         }
 
         async function submitAuth(event) {
             event.preventDefault();
             const username = document.getElementById('authUsername').value.trim();
             const password = document.getElementById('authPassword').value;
+            const recoveryName = document.getElementById('authRecoveryName').value.trim();
             const message = document.getElementById('authMessage');
             const submitButton = document.getElementById('authSubmitButton');
             if (!/^[A-Za-z0-9_\u4e00-\u9fa5]{3,20}$/.test(username)) {
@@ -1475,6 +1835,10 @@ let paused = false; // 暂停状态变量
                 message.textContent = '密码至少需要8位';
                 return;
             }
+            if (authMode === 'register' && !recoveryName) {
+                message.textContent = '请填写你最好的朋友名称';
+                return;
+            }
 
             submitButton.disabled = true;
             message.textContent = '正在验证...';
@@ -1482,10 +1846,11 @@ let paused = false; // 暂停状态变量
                 const endpoint = authMode === 'register' ? '/api/register' : '/api/login';
                 const result = await apiRequest(endpoint, {
                     method: 'POST',
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password, ...(authMode === 'register' ? { recoveryName } : {}) })
                 });
-                await showAccountMenu(result.user.username);
+                await showAccountMenu(result.user.username, result.user.recoveryReady, result.user.isAdmin);
                 document.getElementById('authForm').reset();
+                await joinCoopRoomFromUrl();
             } catch (error) {
                 console.error('账号操作失败:', error);
                 message.textContent = error.message || '操作失败';
@@ -1494,10 +1859,39 @@ let paused = false; // 暂停状态变量
             }
         }
 
+        async function submitPasswordReset(event) {
+            event.preventDefault();
+            const message = document.getElementById('resetMessage');
+            const submitButton = document.getElementById('resetSubmitButton');
+            const username = document.getElementById('resetUsername').value.trim();
+            const recoveryName = document.getElementById('resetRecoveryName').value.trim();
+            const newPassword = document.getElementById('resetNewPassword').value;
+            if (newPassword.length < 8 || newPassword.length > 128) {
+                message.textContent = '新密码长度需为8-128位';
+                return;
+            }
+            submitButton.disabled = true;
+            message.textContent = '正在验证...';
+            try {
+                await apiRequest('/api/reset-password', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, recoveryName, newPassword })
+                });
+                document.getElementById('resetPasswordForm').reset();
+                setAuthMode('login');
+                document.getElementById('authMessage').textContent = '密码已重置，请使用新密码登录';
+            } catch (error) {
+                message.textContent = error.message;
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+
         async function restoreAccountSession() {
             try {
                 const result = await apiRequest('/api/session');
-                await showAccountMenu(result.user.username);
+                await showAccountMenu(result.user.username, result.user.recoveryReady, result.user.isAdmin);
+                await joinCoopRoomFromUrl();
             } catch (error) {
                 currentUser = null;
                 cachedSaveData = null;
@@ -1508,6 +1902,14 @@ let paused = false; // 暂停状态变量
                 }
                 checkForSavedGame();
             }
+        }
+
+        async function joinCoopRoomFromUrl() {
+            const roomCode = new URLSearchParams(window.location.hash.slice(1)).get('room');
+            if (!roomCode || !/^[A-Fa-f0-9]{12}$/.test(roomCode)) return;
+            window.history.replaceState(null, '', window.location.pathname);
+            document.getElementById('coopOverlay').style.display = 'flex';
+            await joinCoopRoom(roomCode.toUpperCase());
         }
 
         function addFriendRow(list, username, emptyText, actions) {
@@ -1628,6 +2030,434 @@ let paused = false; // 暂停状态变量
                 await refreshFriends();
             } catch (error) {
                 document.getElementById('friendsMessage').textContent = error.message;
+            }
+        }
+
+        async function refreshAdminUsers() {
+            const list = document.getElementById('adminUserList');
+            const message = document.getElementById('adminMessage');
+            try {
+                const result = await apiRequest('/api/admin/users');
+                list.replaceChildren();
+                message.textContent = `账号数量：${result.users.length}`;
+                for (const account of result.users) {
+                    const row = document.createElement('li');
+                    row.className = 'admin-user-row';
+                    const username = document.createElement('span');
+                    username.textContent = account.username;
+                    const role = document.createElement('span');
+                    role.className = 'admin-role';
+                    role.textContent = account.role === 'admin' ? '管理员' : '玩家';
+                    row.append(username, role);
+                    if (account.role !== 'admin') {
+                        const deleteButton = document.createElement('button');
+                        deleteButton.type = 'button';
+                        deleteButton.className = 'admin-delete-button';
+                        deleteButton.textContent = '删除账号';
+                        deleteButton.addEventListener('click', () => deleteAdminAccount(account.username));
+                        row.appendChild(deleteButton);
+                    }
+                    list.appendChild(row);
+                }
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        }
+
+        async function deleteAdminAccount(username) {
+            const confirmed = window.confirm(`确定删除玩家账号“${username}”？其存档、好友关系和登录会话也会删除。`);
+            if (!confirmed) return;
+            try {
+                await apiRequest(`/api/admin/users/${encodeURIComponent(username)}`, { method: 'DELETE' });
+                document.getElementById('adminMessage').textContent = `已删除账号：${username}`;
+                await refreshAdminUsers();
+            } catch (error) {
+                document.getElementById('adminMessage').textContent = error.message;
+            }
+        }
+
+        async function openAdminPanel() {
+            if (!currentUserIsAdmin) return;
+            document.getElementById('adminOverlay').style.display = 'flex';
+            document.getElementById('adminMessage').textContent = '';
+            await refreshAdminUsers();
+        }
+
+        function setCoopSpawnPosition() {
+            const spawnPoints = [
+                { x: 0.35, y: 0.5 },
+                { x: 0.65, y: 0.5 },
+                { x: 0.5, y: 0.35 },
+                { x: 0.5, y: 0.65 }
+            ];
+            const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f'];
+            const spawn = spawnPoints[coopPlayerSlot % spawnPoints.length];
+            player.x = canvas.width * spawn.x;
+            player.y = canvas.height * spawn.y;
+            player.color = colors[coopPlayerSlot % colors.length];
+        }
+
+        function updateCoopPresence() {
+            const status = document.getElementById('coopPresence');
+            const visible = Boolean(coopRoomCode && gameStarted);
+            status.style.display = visible ? 'block' : 'none';
+            if (visible) {
+                const usernames = coopPlayers.map(remote => remote.username);
+                status.textContent = usernames.length
+                    ? `队友：${usernames.join('、')}`
+                    : coopHost ? '等待好友加入房间…' : '正在连接房主…';
+            }
+            updateCoopPlayerHud();
+        }
+
+        function updateCoopPlayerHud() {
+            const container = document.getElementById('gameContainer');
+            const hud = document.getElementById('coopPlayerHud');
+            const visible = Boolean(coopRoomCode && gameStarted);
+            container.classList.toggle('coop-active', visible);
+            if (!visible) return;
+
+            const localPlayer = {
+                id: currentUser.toLowerCase(),
+                username: currentUser,
+                slot: coopPlayerSlot,
+                health,
+                maxHealth,
+                weapon: currentWeapon.name,
+                ammo,
+                maxAmmo,
+                sniperAmmo,
+                sniperMaxAmmo,
+                score,
+                wave
+            };
+            const playersBySlot = new Map([[localPlayer.slot, localPlayer]]);
+            for (const remote of coopPlayers) {
+                if (Number.isInteger(remote.slot) && remote.slot >= 0 && remote.slot < 4) {
+                    playersBySlot.set(remote.slot, remote);
+                }
+            }
+
+            for (const card of hud.querySelectorAll('.coop-player-card')) {
+                card.replaceChildren();
+                const slot = Number(card.dataset.slot);
+                const account = playersBySlot.get(slot);
+                const isOwnPlayer = Boolean(account && account.id === localPlayer.id);
+                card.classList.toggle('own-player', isOwnPlayer);
+                if (!account) {
+                    const waiting = document.createElement('span');
+                    waiting.className = 'coop-player-details';
+                    waiting.textContent = '等待队友加入';
+                    card.appendChild(waiting);
+                    continue;
+                }
+
+                const name = document.createElement('strong');
+                name.className = 'coop-player-name';
+                name.textContent = `${account.username}${isOwnPlayer ? ' · 你' : ''}`;
+                const equipment = document.createElement('span');
+                equipment.className = 'coop-player-details';
+                equipment.textContent = `${account.weapon} · 弹药 ${account.ammo}/${account.maxAmmo} · 狙击 ${account.sniperAmmo}/${account.sniperMaxAmmo}`;
+                const teamStats = document.createElement('span');
+                teamStats.className = 'coop-player-details';
+                teamStats.textContent = `团队生命 ${Math.floor(account.health)}/${account.maxHealth} · 积分 ${account.score} · 波次 ${account.wave}`;
+                card.append(name, equipment, teamStats);
+            }
+        }
+
+        function updateCoopRoomPanel() {
+            const roomInfo = document.getElementById('coopRoomInfo');
+            const active = Boolean(coopRoomCode);
+            roomInfo.style.display = active ? 'flex' : 'none';
+            document.getElementById('coopCreateForm').style.display = active ? 'none' : 'flex';
+            document.getElementById('coopRoomCode').textContent = coopRoomCode || '';
+            document.getElementById('coopShareLink').value = active
+                ? `${window.location.origin}${window.location.pathname}#room=${coopRoomCode}`
+                : '';
+            document.getElementById('coopLeaveButton').textContent = coopHost ? '结束房间' : '离开房间';
+        }
+
+        async function refreshCoopInvitations() {
+            if (!currentUser) return;
+            try {
+                const result = await apiRequest('/api/coop/invitations');
+                const list = document.getElementById('coopInvitations');
+                list.replaceChildren();
+                if (!result.invitations.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'coop-empty';
+                    empty.textContent = '暂无待处理邀请';
+                    list.appendChild(empty);
+                    return;
+                }
+                for (const invitation of result.invitations) {
+                    const row = document.createElement('li');
+                    row.className = 'coop-invitation';
+                    const label = document.createElement('span');
+                    label.textContent = `${invitation.host} 邀请你联机 · ${invitation.players}/4 人`;
+                    const joinButton = document.createElement('button');
+                    joinButton.type = 'button';
+                    joinButton.textContent = '加入';
+                    joinButton.addEventListener('click', () => joinCoopRoom(invitation.code));
+                    row.append(label, joinButton);
+                    list.appendChild(row);
+                }
+            } catch (error) {
+                if (error.status !== 401) console.warn('刷新联机邀请失败:', error);
+            }
+        }
+
+        async function openCoopPanel() {
+            const message = document.getElementById('coopMessage');
+            message.textContent = '';
+            document.getElementById('coopOverlay').style.display = 'flex';
+            updateCoopRoomPanel();
+            try {
+                const result = await apiRequest('/api/friends');
+                const select = document.getElementById('coopFriendSelect');
+                select.replaceChildren();
+                for (const username of result.friends) {
+                    const option = document.createElement('option');
+                    option.value = username;
+                    option.textContent = username;
+                    select.appendChild(option);
+                }
+                if (!result.friends.length) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '请先添加好友';
+                    select.appendChild(option);
+                    select.disabled = true;
+                    document.querySelector('#coopCreateForm button').disabled = true;
+                } else {
+                    select.disabled = false;
+                    document.querySelector('#coopCreateForm button').disabled = false;
+                }
+                await refreshCoopInvitations();
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        }
+
+        async function createCoopRoom(friendUsernames) {
+            const result = await apiRequest('/api/coop/rooms', {
+                method: 'POST',
+            body: JSON.stringify({ usernames: friendUsernames })
+            });
+            coopRoomCode = result.code;
+            coopHost = true;
+            coopPlayerSlot = result.slot || 0;
+            player.color = '#3498db';
+            coopPlayers = [];
+            updateCoopPresence();
+            startCoopSync();
+            updateCoopRoomPanel();
+            document.getElementById('coopMessage').textContent = '房间已创建，好友可在邀请列表中加入，也可使用房间码。';
+        }
+
+        function applyCoopSnapshot(state) {
+            if (!state || !Array.isArray(state.zombies) || !Array.isArray(state.bullets)) return;
+            wave = state.wave;
+            zombiesInWave = state.zombiesInWave;
+            zombiesKilled = state.zombiesKilled;
+            score = state.score;
+            health = state.health;
+            maxHealth = state.maxHealth;
+            zombies = state.zombies.map(zombie => ({
+                ...zombie,
+                x: zombie.x * canvas.width,
+                y: zombie.y * canvas.height,
+                radius: zombie.radius * Math.min(canvas.width, canvas.height),
+                speed: zombie.speed * Math.min(canvas.width, canvas.height),
+                originalSpeed: zombie.originalSpeed * Math.min(canvas.width, canvas.height)
+            }));
+            bullets = state.bullets.map(bullet => ({
+                ...bullet,
+                x: bullet.x * canvas.width,
+                y: bullet.y * canvas.height,
+                velocityX: bullet.velocityX * canvas.width,
+                velocityY: bullet.velocityY * canvas.height,
+                radius: bullet.radius * Math.min(canvas.width, canvas.height)
+            }));
+            waveIntermission = Boolean(state.waveIntermission);
+            coopHostPaused = Boolean(state.paused);
+            document.getElementById('gameContainer').classList.toggle('wave-intermission', waveIntermission);
+            document.getElementById('nextWaveButton').textContent = `开始第 ${wave + 1} 波`;
+            document.getElementById('nextWaveButton').disabled = Boolean(coopRoomCode && !coopHost);
+            updateUI();
+            if (waveIntermission) {
+                document.getElementById('waveIndicator').textContent = `第 ${wave} 波完成`;
+            }
+        }
+
+        function startCoopGame(state) {
+            if (!gameStarted) {
+                resizeCanvas();
+                if (state) applyCoopSnapshot(state);
+                if (!zombies.length) spawnZombies();
+                gameStarted = true;
+                gameOver = false;
+                paused = false;
+                setCoopSpawnPosition();
+                setWaveIntermission(waveIntermission);
+                toggleMainMenu(false);
+                generateShopItems();
+                updateUI();
+            } else if (state) {
+                applyCoopSnapshot(state);
+            }
+            updateCoopPresence();
+        }
+
+        async function joinCoopRoom(code) {
+            const message = document.getElementById('coopMessage');
+            try {
+                const result = await apiRequest(`/api/coop/rooms/${encodeURIComponent(code)}/join`, { method: 'POST' });
+                coopRoomCode = result.code;
+                coopHost = false;
+                coopPlayerSlot = Number.isInteger(result.slot) ? result.slot : 1;
+                coopPlayers = [];
+                player.color = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f'][coopPlayerSlot % 4];
+                updateCoopPresence();
+                startCoopSync();
+                updateCoopRoomPanel();
+                startCoopGame(result.state);
+                message.textContent = `已加入 ${result.host} 的房间`;
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        }
+
+        function coopGameSnapshot() {
+            return {
+                wave,
+                zombiesInWave,
+                zombiesKilled,
+                score,
+                health,
+                maxHealth,
+                paused,
+                waveIntermission,
+                zombies: zombies.map(zombie => ({
+                    ...zombie,
+                    x: zombie.x / canvas.width,
+                    y: zombie.y / canvas.height,
+                    radius: zombie.radius / Math.min(canvas.width, canvas.height),
+                    speed: zombie.speed / Math.min(canvas.width, canvas.height),
+                    originalSpeed: zombie.originalSpeed / Math.min(canvas.width, canvas.height)
+                })),
+                bullets: bullets.map(bullet => ({
+                    ...bullet,
+                    x: bullet.x / canvas.width,
+                    y: bullet.y / canvas.height,
+                    velocityX: bullet.velocityX / canvas.width,
+                    velocityY: bullet.velocityY / canvas.height,
+                    radius: bullet.radius / Math.min(canvas.width, canvas.height)
+                }))
+            };
+        }
+
+        async function syncCoopState() {
+            if (!coopRoomCode || coopSyncBusy || (gameOver && coopHost)) return;
+            coopSyncBusy = true;
+            try {
+                const input = {
+                    x: canvas.width ? player.x / canvas.width : 0.5,
+                    y: canvas.height ? player.y / canvas.height : 0.5,
+                    aimX: canvas.width ? mouse.x / canvas.width : 0.5,
+                    aimY: canvas.height ? mouse.y / canvas.height : 0.5,
+                    color: player.color,
+                    invincible,
+                    health,
+                    maxHealth,
+                    ammo,
+                    maxAmmo,
+                    sniperAmmo,
+                    sniperMaxAmmo,
+                    weapon: currentWeapon.name,
+                    score,
+                    wave,
+                    shots: coopHost ? [] : coopOutgoingShots.splice(0).map(shot => ({
+                        ...shot,
+                        x: shot.x / canvas.width,
+                        y: shot.y / canvas.height,
+                        velocityX: shot.velocityX / canvas.width,
+                        velocityY: shot.velocityY / canvas.height,
+                        radius: shot.radius / Math.min(canvas.width, canvas.height)
+                    }))
+                };
+                const result = await apiRequest(`/api/coop/rooms/${coopRoomCode}/sync`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        input,
+                        ...(coopHost && gameStarted ? { state: coopGameSnapshot() } : {})
+                    })
+                });
+                coopPlayers = result.players.filter(remote => remote.id !== currentUser.toLowerCase());
+                updateCoopPresence();
+                if (coopHost) {
+                    for (const shot of result.shots) {
+                        bullets.push({
+                            ...shot,
+                            x: shot.x * canvas.width,
+                            y: shot.y * canvas.height,
+                            velocityX: shot.velocityX * canvas.width,
+                            velocityY: shot.velocityY * canvas.height,
+                            radius: shot.radius * Math.min(canvas.width, canvas.height)
+                        });
+                    }
+                } else if (result.state) {
+                    applyCoopSnapshot(result.state);
+                }
+                coopLastError = '';
+            } catch (error) {
+                if (error.status === 404 || error.status === 403) {
+                    stopCoopRoom(false);
+                    showMessage('联机房间已关闭');
+                } else if (coopLastError !== error.message) {
+                    coopLastError = error.message;
+                    console.warn('联机同步暂时失败:', error);
+                }
+            } finally {
+                coopSyncBusy = false;
+            }
+        }
+
+        function startCoopSync() {
+            if (coopSyncTimer) clearInterval(coopSyncTimer);
+            coopSyncTimer = setInterval(syncCoopState, 100);
+        }
+
+        async function stopCoopRoom(notifyServer = true) {
+            const code = coopRoomCode;
+            if (coopSyncTimer) clearInterval(coopSyncTimer);
+            coopSyncTimer = null;
+            coopRoomCode = null;
+            coopHost = false;
+            coopPlayerSlot = 0;
+            coopPlayers = [];
+            coopOutgoingShots = [];
+            updateCoopRoomPanel();
+            updateCoopPresence();
+            if (notifyServer && code) {
+                try {
+                    await apiRequest(`/api/coop/rooms/${code}/leave`, { method: 'POST' });
+                } catch (error) {
+                    console.warn('退出联机房间失败:', error);
+                }
+            }
+        }
+
+        async function copyCoopInvite() {
+            const text = document.getElementById('coopShareLink').value;
+            try {
+                await navigator.clipboard.writeText(text);
+                document.getElementById('coopMessage').textContent = '邀请信息已复制';
+            } catch (error) {
+                const input = document.getElementById('coopShareLink');
+                input.select();
+                document.execCommand('copy');
+                document.getElementById('coopMessage').textContent = '邀请信息已复制';
             }
         }
 
@@ -1869,6 +2699,7 @@ let paused = false; // 暂停状态变量
 
         // 保存后返回主菜单（不刷新页面）
         function returnToMainMenu() {
+            if (coopRoomCode) stopCoopRoom();
             gameStarted = false;
             paused = false;
             setWaveIntermission(false);
@@ -1891,6 +2722,7 @@ let paused = false; // 暂停状态变量
 
             // 重置全部状态并生成第一波僵尸
             resetRunState();
+            if (coopRoomCode && coopHost) setCoopSpawnPosition();
             spawnZombies();
 
             gameOver = false;
@@ -1923,6 +2755,7 @@ let paused = false; // 暂停状态变量
             // 先回到干净的初始状态，再用存档覆盖恢复
             resetRunState();
             applySaveData(data);
+            if (coopRoomCode && coopHost) setCoopSpawnPosition();
 
             gameOver = false;
             paused = false;
@@ -1961,21 +2794,14 @@ let paused = false; // 暂停状态变量
             
             // 如果不处于自救状态，更新游戏元素
             if (!selfRescueActive) {
-                // 更新玩家
-                updatePlayer();
-                
-                // 更新子弹
-                updateBullets();
-                
-                // 更新僵尸
-                updateZombies();
-                
-                // 检查碰撞
-                checkCollisions();
-                
-                // 检查是否需要触发自救（无敌时间内不会触发）
-                if (!invincible && !selfRescueCooldown) {
-                    checkSelfRescueTrigger();
+                if (!coopRoomCode || coopHost) {
+                    updatePlayer();
+                    updateBullets();
+                    updateZombies();
+                    checkCollisions();
+                    if (!invincible && !selfRescueCooldown) checkSelfRescueTrigger();
+                } else if (!coopHostPaused) {
+                    updatePlayer();
                 }
             } else {
                 // 自救状态下，僵尸停止移动，玩家不能移动
@@ -1986,6 +2812,7 @@ let paused = false; // 暂停状态变量
             
             // 绘制玩家
             drawPlayer();
+            drawCoopPlayers();
             
             // 绘制子弹
             drawBullets();
@@ -2224,6 +3051,30 @@ let paused = false; // 暂停状态变量
             }
         }
         
+        function drawCoopPlayers() {
+            for (const remote of coopPlayers) {
+                const remoteX = remote.x * canvas.width;
+                const remoteY = remote.y * canvas.height;
+                const aimX = remote.aimX * canvas.width;
+                const aimY = remote.aimY * canvas.height;
+                const angle = Math.atan2(aimY - remoteY, aimX - remoteX);
+                ctx.fillStyle = remote.color;
+                ctx.beginPath();
+                ctx.arc(remoteX, remoteY, player.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#f5f5f5';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(remoteX, remoteY);
+                ctx.lineTo(remoteX + Math.cos(angle) * 20, remoteY + Math.sin(angle) * 20);
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(remote.username, remoteX, remoteY - player.radius - 10);
+            }
+        }
+
         // 僵尸工厂：属性随波次增强（普通生成与存档恢复共用，保证数值一致）
         function createZombie(zombieWave, x, y) {
             const zombieHealth = 30 + (zombieWave * 5);
@@ -2274,6 +3125,47 @@ let paused = false; // 暂停状态变量
             spawnZombieGroup(zombiesInWave);
         }
         
+        function findNearestZombieTarget(zombie) {
+            const targets = [{
+                x: player.x,
+                y: player.y,
+                radius: player.radius,
+                invincible,
+                isLocal: true
+            }];
+            if (coopRoomCode && coopHost) {
+                for (const remote of coopPlayers) {
+                    targets.push({
+                        x: remote.x * canvas.width,
+                        y: remote.y * canvas.height,
+                        radius: player.radius,
+                        invincible: remote.invincible,
+                        isLocal: false
+                    });
+                }
+            }
+
+            let nearestTarget = targets[0];
+            let nearestDistance = Infinity;
+            for (const target of targets) {
+                const dx = target.x - zombie.x;
+                const dy = target.y - zombie.y;
+                const distance = Math.hypot(dx, dy);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestTarget = {
+                        ...target,
+                        dx,
+                        dy,
+                        distance,
+                        directionX: distance > 0 ? dx / distance : 0,
+                        directionY: distance > 0 ? dy / distance : 0
+                    };
+                }
+            }
+            return nearestTarget;
+        }
+
         // 更新僵尸
         function updateZombies() {
             // 自救状态下，僵尸停止移动
@@ -2282,21 +3174,17 @@ let paused = false; // 暂停状态变量
             for (let i = zombies.length - 1; i >= 0; i--) {
                 const zombie = zombies[i];
                 
-                // 计算朝向玩家的方向
-                const dx = player.x - zombie.x;
-                const dy = player.y - zombie.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                const target = findNearestZombieTarget(zombie);
                 
                 // 移动僵尸
-                if (distance > 0) {
-                    zombie.x += (dx / distance) * zombie.speed;
-                    zombie.y += (dy / distance) * zombie.speed;
+                if (target.distance > 0) {
+                    zombie.x += target.directionX * zombie.speed;
+                    zombie.y += target.directionY * zombie.speed;
                 }
                 
-                // 检查僵尸是否攻击玩家
-                if (distance < player.radius + zombie.radius) {
+                if (target.distance < target.radius + zombie.radius) {
                     // 无敌状态下，僵尸不会造成伤害
-                    if (!invincible && !selfRescueActive) {
+                    if (!target.invincible && !selfRescueActive) {
                         health -= zombie.damage * 0.1; // 降低伤害系数，避免瞬间死亡
                         
                         // 受伤效果
@@ -2313,15 +3201,16 @@ let paused = false; // 暂停状态变量
                             return;
                         }
                         
-                        // 击退效果
-                        const knockback = 5;
-                        player.x -= (dx / distance) * knockback;
-                        player.y -= (dy / distance) * knockback;
-                    } else if (invincible) {
+                        if (target.isLocal) {
+                            const knockback = 5;
+                            player.x -= target.directionX * knockback;
+                            player.y -= target.directionY * knockback;
+                        }
+                    } else if (target.invincible) {
                         // 无敌状态下，僵尸接触玩家时会被弹开
                         const knockback = 8;
-                        zombie.x -= (dx / distance) * knockback;
-                        zombie.y -= (dy / distance) * knockback;
+                        zombie.x -= target.directionX * knockback;
+                        zombie.y -= target.directionY * knockback;
                         
                         // 无敌状态下接触僵尸有特效
                         createParticles(zombie.x, zombie.y, '#00ff00', 3);
@@ -2384,6 +3273,7 @@ let paused = false; // 暂停状态变量
         function createBullet() {
             // 自救状态下不能射击
             if (selfRescueActive) return;
+            const previousBulletCount = bullets.length;
             
             // 狙击枪特殊处理
             if (currentWeapon.type === "sniper") {
@@ -2481,6 +3371,9 @@ let paused = false; // 暂停状态变量
             
             // 更新UI
             updateUI();
+            if (coopRoomCode && !coopHost && bullets.length > previousBulletCount) {
+                coopOutgoingShots.push({ ...bullets[bullets.length - 1] });
+            }
         }
         
         // 更新子弹
@@ -2921,6 +3814,7 @@ let paused = false; // 暂停状态变量
         // 下一波僵尸
         function nextWave() {
             if (!waveIntermission) return;
+            if (coopRoomCode && !coopHost) return;
 
             setWaveIntermission(false);
             paused = false;
@@ -2948,6 +3842,7 @@ let paused = false; // 暂停状态变量
             waveIntermission = active;
             document.getElementById('gameContainer').classList.toggle('wave-intermission', active);
             document.getElementById('nextWaveButton').textContent = `开始第 ${wave + 1} 波`;
+            document.getElementById('nextWaveButton').disabled = Boolean(coopRoomCode && !coopHost);
         }
         
         // 显示波次信息
@@ -3106,6 +4001,10 @@ let paused = false; // 暂停状态变量
         
         // 购买武器
         function buyWeapon(weaponId) {
+            if (coopRoomCode && !coopHost) {
+                showMessage('共享装备由房主购买');
+                return;
+            }
             const weapon = weapons.find(w => w.id === weaponId);
             
             if (weapon && !weapon.unlocked && score >= weapon.cost) {
@@ -3121,6 +4020,10 @@ let paused = false; // 暂停状态变量
         
         // 装备武器
         function equipWeapon(weaponId) {
+            if (coopRoomCode && !coopHost) {
+                showMessage('共享装备由房主选择');
+                return;
+            }
             const weapon = weapons.find(w => w.id === weaponId);
             
             if (weapon && weapon.unlocked) {
@@ -3151,6 +4054,10 @@ let paused = false; // 暂停状态变量
         
         // 购买升级
         function buyUpgrade(upgradeId) {
+            if (coopRoomCode && !coopHost) {
+                showMessage('共享装备由房主购买');
+                return;
+            }
             const upgrade = upgrades.find(u => u.id === upgradeId);
             
             if (upgrade && score >= upgrade.cost) {
@@ -3276,7 +4183,64 @@ let paused = false; // 暂停状态变量
         // 事件监听器
         function setupEventListeners() {
             document.getElementById('authForm').addEventListener('submit', submitAuth);
+            document.getElementById('resetPasswordForm').addEventListener('submit', submitPasswordReset);
+            document.getElementById('authResetButton').addEventListener('click', () => setAuthMode('reset'));
+            document.getElementById('resetBackButton').addEventListener('click', () => setAuthMode('login'));
+            document.getElementById('legacyRecoveryForm').addEventListener('submit', async event => {
+                event.preventDefault();
+                const message = document.getElementById('legacyRecoveryMessage');
+                const name = document.getElementById('legacyRecoveryName').value.trim();
+                try {
+                    await apiRequest('/api/recovery-name', {
+                        method: 'POST',
+                        body: JSON.stringify({ recoveryName: name })
+                    });
+                    document.getElementById('legacyRecoveryForm').reset();
+                    document.getElementById('legacyRecoveryForm').style.display = 'none';
+                    showMessage('找回验证已设置');
+                } catch (error) {
+                    message.textContent = error.message;
+                }
+            });
             document.getElementById('friendsButton').addEventListener('click', openFriendsPanel);
+            document.getElementById('coopButton').addEventListener('click', openCoopPanel);
+            document.getElementById('adminButton').addEventListener('click', openAdminPanel);
+            document.getElementById('adminClose').addEventListener('click', () => {
+                document.getElementById('adminOverlay').style.display = 'none';
+            });
+            document.getElementById('adminOverlay').addEventListener('click', event => {
+                if (event.target.id === 'adminOverlay') event.currentTarget.style.display = 'none';
+            });
+            document.getElementById('openCoopFromPause').addEventListener('click', openCoopPanel);
+            document.getElementById('coopClose').addEventListener('click', () => {
+                document.getElementById('coopOverlay').style.display = 'none';
+            });
+            document.getElementById('coopOverlay').addEventListener('click', event => {
+                if (event.target.id === 'coopOverlay') event.currentTarget.style.display = 'none';
+            });
+            document.getElementById('coopCreateForm').addEventListener('submit', async event => {
+                event.preventDefault();
+                const friendUsernames = Array.from(document.getElementById('coopFriendSelect').selectedOptions)
+                    .map(option => option.value);
+                if (!friendUsernames.length || friendUsernames.length > 3) return;
+                try {
+                    await createCoopRoom(friendUsernames);
+                    await refreshCoopInvitations();
+                } catch (error) {
+                    document.getElementById('coopMessage').textContent = error.message;
+                }
+            });
+            document.getElementById('coopJoinForm').addEventListener('submit', async event => {
+                event.preventDefault();
+                const input = document.getElementById('coopJoinCode');
+                await joinCoopRoom(input.value.trim().toUpperCase());
+                input.value = '';
+            });
+            document.getElementById('coopCopyButton').addEventListener('click', copyCoopInvite);
+            document.getElementById('coopLeaveButton').addEventListener('click', async () => {
+                await stopCoopRoom();
+                document.getElementById('coopMessage').textContent = '已退出联机房间';
+            });
             document.getElementById('friendsClose').addEventListener('click', () => {
                 document.getElementById('friendsOverlay').style.display = 'none';
             });
@@ -3293,6 +4257,9 @@ let paused = false; // 暂停状态变量
             });
             document.getElementById('logoutButton').addEventListener('click', async () => {
                 let logoutMessage = '';
+                await stopCoopRoom();
+                if (coopInvitationTimer) clearInterval(coopInvitationTimer);
+                coopInvitationTimer = null;
                 try {
                     await apiRequest('/api/logout', { method: 'POST' });
                 } catch (error) {
@@ -3300,6 +4267,7 @@ let paused = false; // 暂停状态变量
                     logoutMessage = '退出请求未能送达服务器';
                 }
                 currentUser = null;
+                currentUserIsAdmin = false;
                 cachedSaveData = null;
                 gameStarted = false;
                 paused = false;
@@ -3308,6 +4276,8 @@ let paused = false; // 暂停状态变量
                 document.getElementById('authPanel').style.display = 'block';
                 document.getElementById('gameMenu').style.display = 'none';
                 document.getElementById('friendsOverlay').style.display = 'none';
+                document.getElementById('adminButton').style.display = 'none';
+                document.getElementById('adminOverlay').style.display = 'none';
                 document.getElementById('authMessage').textContent = logoutMessage;
                 toggleMainMenu(true);
                 checkForSavedGame();
@@ -3369,6 +4339,10 @@ let paused = false; // 暂停状态变量
                 // ESC键暂停/继续游戏（仅在对局进行中、且不在自救环节时生效，
                 // 防止自救中暂停导致倒计时偷偷走完；暂停时也要靠它恢复）
                 if (e.key === 'Escape' && gameStarted && !gameOver) {
+                    if (coopRoomCode && !coopHost) {
+                        showMessage('由房主控制暂停');
+                        return;
+                    }
                     togglePause();
                     return;
                 }
