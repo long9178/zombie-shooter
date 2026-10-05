@@ -110,23 +110,132 @@
         .wave-intermission #sidebar {
             display: flex;
             position: absolute;
-            top: 12px;
-            right: 12px;
-            width: min(360px, calc(100% - 24px));
-            height: min(520px, calc(100% - 24px));
-            max-height: calc(100% - 24px);
-            padding: 16px;
-            z-index: 30;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1100;
             overflow: hidden;
-            border: 2px solid #8b0000;
+            background: rgba(4, 4, 7, 0.84);
+            backdrop-filter: blur(5px);
+            border: 0;
         }
 
         .wave-intermission #controlsInfo {
             display: none;
         }
 
+        .wave-intermission #storageDevice {
+            display: none !important;
+        }
+
         .wave-intermission #shop {
+            display: flex;
+            flex-direction: column;
+            width: min(760px, 100%);
+            max-height: min(680px, calc(100% - 64px));
             min-height: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(145deg, #241818, #111116 62%);
+            border: 1px solid #8b0000;
+            border-top: 3px solid #ffcc00;
+            border-radius: 0;
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.72);
+        }
+
+        #shopTabs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            flex: 0 0 auto;
+            border-bottom: 1px solid #8b0000;
+        }
+
+        .shop-tab {
+            min-height: 58px;
+            border: 0;
+            border-right: 1px solid #612525;
+            border-bottom: 2px solid transparent;
+            background: rgba(0, 0, 0, 0.28);
+            color: #d0c5c5;
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+        }
+
+        .shop-tab:last-child {
+            border-right: 0;
+        }
+
+        .shop-tab:hover, .shop-tab[aria-selected="true"] {
+            color: #ffcc00;
+            background: rgba(139, 0, 0, 0.28);
+        }
+
+        .shop-tab[aria-selected="true"] {
+            border-bottom-color: #ffcc00;
+        }
+
+        .wave-intermission #shopItems {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            gap: 12px;
+            padding: 14px 16px;
+            overscroll-behavior: contain;
+            scrollbar-color: #8b0000 #111116;
+        }
+
+        .wave-intermission .shop-item {
+            flex: 0 0 auto;
+            margin: 0;
+            padding: 16px;
+            border-radius: 0;
+        }
+
+        .wave-intermission .item-cost {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .wave-intermission .item-cost > span:first-child {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .wave-intermission .item-cost .cost {
+            white-space: nowrap;
+        }
+
+        .wave-intermission #nextWaveButton {
+            width: min(760px, 100%);
+            min-height: 50px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 560px) {
+            .wave-intermission #sidebar {
+                padding: 12px;
+            }
+
+            .wave-intermission #shop {
+                max-height: min(680px, calc(100% - 62px));
+            }
+
+            .shop-tab {
+                min-height: 52px;
+                font-size: 18px;
+            }
+
+            .wave-intermission #shopItems {
+                padding: 10px;
+            }
         }
 
         .wave-intermission #nextWaveButton {
@@ -454,6 +563,18 @@
             border-left: 3px solid #ffcc00;
             display: none;
         }
+
+        #adrenalineIndicator {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            padding: 10px 15px;
+            color: #ffd166;
+            background: rgba(106, 53, 0, 0.82);
+            border-left: 3px solid #ff9f1c;
+            font-size: 14px;
+            display: none;
+        }
         
         #scopeOverlay {
             position: absolute;
@@ -501,6 +622,176 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+        }
+
+        #inventoryOverlay {
+            position: absolute;
+            inset: 0;
+            z-index: 1100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(4, 4, 7, 0.84);
+            backdrop-filter: blur(5px);
+        }
+
+        #inventoryPanel {
+            width: min(760px, 100%);
+            max-height: min(760px, calc(100vh - 40px));
+            overflow-y: auto;
+            padding: 24px;
+            color: #f4eeee;
+            background: linear-gradient(145deg, #241818, #111116 62%);
+            border: 1px solid #8b0000;
+            border-top: 3px solid #ffcc00;
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.72);
+        }
+
+        #inventoryHeader, .inventory-section-header, .inventory-weapon-top, #inventoryFooter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .inventory-kicker {
+            color: #d48c35;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        #inventoryTitle {
+            margin-top: 4px;
+            color: #ffcc00;
+            font-size: 28px;
+        }
+
+        #inventoryClose {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            border: 1px solid #8b0000;
+            background: rgba(139, 0, 0, 0.24);
+            color: #fff;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        #inventorySummary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin: 22px 0 26px;
+        }
+
+        .inventory-stat {
+            min-width: 0;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.42);
+            border-left: 2px solid #8b0000;
+        }
+
+        .inventory-stat span, .inventory-stat strong {
+            display: block;
+            overflow-wrap: anywhere;
+        }
+
+        .inventory-stat span {
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .inventory-stat strong {
+            color: #ffcc00;
+            font-size: 18px;
+        }
+
+        .inventory-section-header {
+            margin-bottom: 10px;
+        }
+
+        .inventory-section-header h3 {
+            color: #fff;
+            font-size: 16px;
+        }
+
+        #inventoryWeaponCount {
+            color: #999;
+            font-size: 12px;
+        }
+
+        #inventoryWeapons {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .inventory-weapon {
+            min-width: 0;
+            padding: 14px;
+            text-align: left;
+            color: #eee;
+            background: rgba(55, 20, 20, 0.54);
+            border: 1px solid #563333;
+            cursor: pointer;
+            transition: background-color 140ms ease, border-color 140ms ease;
+        }
+
+        .inventory-weapon:hover, .inventory-weapon:focus-visible {
+            background: rgba(92, 28, 22, 0.78);
+            border-color: #d48c35;
+            outline: none;
+        }
+
+        .inventory-weapon.equipped {
+            background: rgba(100, 49, 12, 0.32);
+            border-color: #ffcc00;
+        }
+
+        .inventory-weapon-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .inventory-weapon-state {
+            flex-shrink: 0;
+            color: #ffcc00;
+            font-size: 11px;
+        }
+
+        .inventory-weapon-details {
+            margin-top: 9px;
+            color: #aaa;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        #inventoryFooter {
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 12px;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #392626;
+        }
+
+        @media (max-width: 560px) {
+            #inventoryPanel {
+                padding: 18px;
+            }
+
+            #inventorySummary {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            #inventoryWeapons {
+                grid-template-columns: 1fr;
+            }
         }
         
         /* 主菜单样式 */
@@ -1324,6 +1615,32 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="inventoryOverlay" role="presentation" aria-hidden="true">
+                    <section id="inventoryPanel" role="dialog" aria-modal="true" aria-labelledby="inventoryTitle">
+                        <header id="inventoryHeader">
+                            <div>
+                                <span class="inventory-kicker">FIELD LOADOUT</span>
+                                <h2 id="inventoryTitle">随身背包</h2>
+                            </div>
+                            <button id="inventoryClose" type="button" aria-label="关闭背包" title="关闭背包">×</button>
+                        </header>
+                        <div id="inventorySummary" aria-live="polite">
+                            <div class="inventory-stat"><span>生命</span><strong id="inventoryHealth"></strong></div>
+                            <div class="inventory-stat"><span>常规弹药</span><strong id="inventoryAmmo"></strong></div>
+                            <div class="inventory-stat"><span>狙击弹药</span><strong id="inventorySniperAmmo"></strong></div>
+                            <div class="inventory-stat"><span>积分</span><strong id="inventoryScore"></strong></div>
+                        </div>
+                        <section aria-labelledby="inventoryWeaponsTitle">
+                            <div class="inventory-section-header">
+                                <h3 id="inventoryWeaponsTitle">已收纳武器</h3>
+                                <span id="inventoryWeaponCount"></span>
+                            </div>
+                            <div id="inventoryWeapons"></div>
+                        </section>
+                        <footer id="inventoryFooter">按 Tab 或 Esc 关闭</footer>
+                    </section>
+                </div>
                 
                 <div id="waveIndicator">波次: 1 | 僵尸剩余: 10</div>
                 <div id="coopPresence" role="status" aria-live="polite"></div>
@@ -1335,12 +1652,14 @@
                 </div>
                 <div id="invincibleIndicator">无敌时间: 0.0秒</div>
                 <div id="cooldownIndicator">自救冷却: 0.0秒</div>
+                <div id="adrenalineIndicator">肾上腺素: 20.0秒</div>
                 <div id="reloadIndicator">装填中: 1.5秒</div>
                 <div id="instructions">
                     击杀僵尸获得积分，用积分购买装备。小心，每波僵尸都会更强！<br>
                     被僵尸包围时触发自救，按提示按键完成自救！<br>
                     无敌时间内不会触发自救，僵尸也不会造成伤害！<br>
-                    商店物品快捷键: 1-9 | 狙击枪(快捷键4): 高伤害，5发弹容，1.5秒装填
+                    武器快捷键: 2-5 | 狙击枪(快捷键4): 高伤害，5发弹容，1.5秒装填<br>
+                    按 Tab 打开背包，查看并切换已解锁武器
                 </div>
                 <div id="gameMessage">
                     <h2>游戏结束</h2>
@@ -1384,6 +1703,10 @@
                         <span class="key">R</span>
                     </div>
                     <div class="control-item">
+                        <span>背包</span>
+                        <span class="key">Tab</span>
+                    </div>
+                    <div class="control-item">
                         <span>商店快捷键</span>
                         <span class="key">1 2 3 4 5 6 7 8 9</span>
                     </div>
@@ -1394,7 +1717,10 @@
                 </div>
                 
                 <div id="shop">
-                    <h3>装备商店 (快捷键: 1-9)</h3>
+                    <div id="shopTabs" role="tablist" aria-label="商店分类">
+                        <button class="shop-tab" type="button" role="tab" id="shopWeaponsTab" aria-controls="shopItems" aria-selected="true" data-shop-tab="weapons">武器</button>
+                        <button class="shop-tab" type="button" role="tab" id="shopConsumablesTab" aria-controls="shopItems" aria-selected="false" data-shop-tab="consumables">消耗品</button>
+                    </div>
                     <div id="shopItems">
                         <!-- 商店物品将通过JavaScript动态生成 -->
                     </div>
@@ -1423,8 +1749,10 @@
 let paused = false; // 暂停状态变量
   let showMainMenu = true; // 控制是否显示主菜单
   let gameStarted = false; // 标记游戏是否已开始
+      let inventoryOpen = false;
   let gameLoopStarted = false; // 保证游戏循环在页面生命周期内只启动一次
     let waveIntermission = false;
+                let shopTab = 'weapons';
 
         // ==================== 存档系统常量 ====================
         const LEGACY_SAVE_KEY_PREFIX = 'zombieShooterSave_v1:';
@@ -1454,6 +1782,7 @@ let paused = false; // 暂停状态变量
         let invincible = false;
         let invincibleTimeLeft = 0;
         let invincibleDuration = 4; // 无敌时间4秒
+        let adrenalineTimeLeft = 0;
         
         // 自救冷却时间相关
         let selfRescueCooldown = false;
@@ -1471,7 +1800,7 @@ let paused = false; // 暂停状态变量
         // 武器系统
         let weapons = [
             { id: 1, name: "手枪", damage: 20, shotDelay: 300, ammoCost: 1, unlocked: true, description: "标准手枪", shortcut: 1, type: "normal" },
-            { id: 2, name: "冲锋枪", damage: 15, shotDelay: 100, ammoCost: 1, cost: 50, unlocked: false, description: "快速射击但伤害较低", shortcut: 2, type: "normal" },
+            { id: 2, name: "冲锋枪", damage: 15, shotDelay: 80, ammoCost: 1, cost: 50, unlocked: false, description: "快速射击但伤害较低", shortcut: 2, type: "normal" },
             { id: 3, name: "霰弹枪", damage: 40, shotDelay: 800, ammoCost: 2, cost: 100, unlocked: false, description: "高伤害但射速慢", shortcut: 3, type: "normal" },
             { id: 4, name: "狙击枪", damage: 100, shotDelay: 1500, ammoCost: 1, cost: 250, unlocked: false, description: "超高伤害，5发弹容，1.5秒装填", shortcut: 4, type: "sniper", magazineSize: 5 },
             { id: 5, name: "步枪", damage: 35, shotDelay: 400, ammoCost: 1, cost: 200, unlocked: false, description: "平衡的武器", shortcut: 5, type: "normal" }
@@ -1481,11 +1810,10 @@ let paused = false; // 暂停状态变量
         
         // 升级项目
         let upgrades = [
-            { id: 1, name: "生命恢复", cost: 30, description: "恢复50点生命值", type: "health", shortcut: 6 },
-            { id: 2, name: "弹药补充", cost: 20, description: "补充所有弹药", type: "ammo", shortcut: 7 },
-            { id: 3, name: "生命上限", cost: 100, description: "增加20点生命上限", type: "maxHealth", shortcut: 8 },
-            { id: 4, name: "移动速度", cost: 80, description: "增加玩家移动速度", type: "speed", shortcut: 9 },
-            { id: 5, name: "无敌护盾", cost: 150, description: "获得3秒无敌时间", type: "invincible", shortcut: 0 }
+            { id: 1, name: "医疗包", cost: 80, description: "使用后恢复50点生命值", type: "health" },
+            { id: 2, name: "肾上腺素", cost: 100, description: "使用后移动速度提升100%，持续20秒", type: "adrenaline" },
+            { id: 3, name: "无敌护盾", cost: 150, description: "使用后获得3秒无敌时间", type: "invincible" },
+            { id: 4, name: "心之容器", cost: 120, description: "使用后生命上限增加20点", type: "maxHealth" }
         ];
         
         // ==================== 自救系统变量 ====================
@@ -1550,6 +1878,7 @@ let paused = false; // 暂停状态变量
             // 初始化冷却时间
             selfRescueCooldown = false;
             selfRescueCooldownTimeLeft = 0;
+            adrenalineTimeLeft = 0;
             
             // 初始化狙击枪状态
             isSniperMode = false;
@@ -1557,6 +1886,7 @@ let paused = false; // 暂停状态变量
             document.getElementById('scopeOverlay').style.display = 'none';
             document.getElementById('reloadIndicator').style.display = 'none';
             document.getElementById('cooldownIndicator').style.display = 'none';
+            document.getElementById('adrenalineIndicator').style.display = 'none';
             
             // 初始化无敌状态
             invincible = false;
@@ -2346,14 +2676,17 @@ let paused = false; // 暂停状态变量
                     speed: zombie.speed / Math.min(canvas.width, canvas.height),
                     originalSpeed: zombie.originalSpeed / Math.min(canvas.width, canvas.height)
                 })),
-                bullets: bullets.map(bullet => ({
-                    ...bullet,
-                    x: bullet.x / canvas.width,
-                    y: bullet.y / canvas.height,
-                    velocityX: bullet.velocityX / canvas.width,
-                    velocityY: bullet.velocityY / canvas.height,
-                    radius: bullet.radius / Math.min(canvas.width, canvas.height)
-                }))
+                bullets: bullets.map(bullet => {
+                    const { hitEntities, ...snapshotBullet } = bullet;
+                    return {
+                        ...snapshotBullet,
+                        x: bullet.x / canvas.width,
+                        y: bullet.y / canvas.height,
+                        velocityX: bullet.velocityX / canvas.width,
+                        velocityY: bullet.velocityY / canvas.height,
+                        radius: bullet.radius / Math.min(canvas.width, canvas.height)
+                    };
+                })
             };
         }
 
@@ -2520,6 +2853,7 @@ let paused = false; // 暂停状态变量
             zombiesKilled = 0;
             gameOver = false;
             paused = false;
+            inventoryOpen = false;
             setWaveIntermission(false);
             lastShotTime = 0;
 
@@ -2549,6 +2883,7 @@ let paused = false; // 暂停状态变量
             invincibleTimeLeft = 0;
             selfRescueCooldown = false;
             selfRescueCooldownTimeLeft = 0;
+            adrenalineTimeLeft = 0;
             selfRescueActive = false;
             selfRescueProgress = 0;
             currentRescueKeyIndex = 0;
@@ -2562,9 +2897,12 @@ let paused = false; // 暂停状态变量
             document.getElementById('scopeOverlay').style.display = 'none';
             document.getElementById('reloadIndicator').style.display = 'none';
             document.getElementById('cooldownIndicator').style.display = 'none';
+            document.getElementById('adrenalineIndicator').style.display = 'none';
             document.getElementById('invincibleIndicator').style.display = 'none';
             document.getElementById('selfRescueOverlay').style.display = 'none';
             document.getElementById('pauseOverlay').style.display = 'none';
+            document.getElementById('inventoryOverlay').style.display = 'none';
+            document.getElementById('inventoryOverlay').setAttribute('aria-hidden', 'true');
             document.getElementById('gameMessage').style.display = 'none';
         }
 
@@ -2634,6 +2972,7 @@ let paused = false; // 暂停状态变量
             selfRescueCooldown = false;
             selfRescueCooldownTimeLeft = 0;
             selfRescueActive = false;
+            adrenalineTimeLeft = 0;
             sniperReloading = false;
             lastShotTime = 0;
 
@@ -2641,6 +2980,7 @@ let paused = false; // 暂停状态变量
             document.getElementById('scopeOverlay').style.display = isSniperMode ? 'block' : 'none';
             document.getElementById('reloadIndicator').style.display = 'none';
             document.getElementById('cooldownIndicator').style.display = 'none';
+            document.getElementById('adrenalineIndicator').style.display = 'none';
             document.getElementById('invincibleIndicator').style.display = 'none';
             document.getElementById('selfRescueOverlay').style.display = 'none';
         }
@@ -2779,6 +3119,9 @@ let paused = false; // 暂停状态变量
             
             // 更新自救冷却时间
             updateSelfRescueCooldown();
+
+            // 更新肾上腺素持续时间
+            updateAdrenaline();
             
             // 更新狙击枪装填状态
             updateSniperReload();
@@ -2879,6 +3222,19 @@ let paused = false; // 暂停状态变量
                 }
             }
         }
+
+        function updateAdrenaline() {
+            if (adrenalineTimeLeft <= 0) return;
+
+            adrenalineTimeLeft = Math.max(0, adrenalineTimeLeft - 1 / 60);
+            const indicator = document.getElementById('adrenalineIndicator');
+            if (adrenalineTimeLeft <= 0) {
+                indicator.style.display = 'none';
+            } else {
+                indicator.textContent = `肾上腺素: ${adrenalineTimeLeft.toFixed(1)}秒`;
+                indicator.style.display = 'block';
+            }
+        }
         
         // 更新狙击枪装填状态
         function updateSniperReload() {
@@ -2889,7 +3245,9 @@ let paused = false; // 暂停状态变量
                 
                 if (timeLeft <= 0) {
                     sniperReloading = false;
+                    sniperAmmo = sniperMaxAmmo;
                     document.getElementById('reloadIndicator').style.display = 'none';
+                    updateUI();
                 } else {
                     // 更新装填指示器
                     const secondsLeft = (timeLeft / 1000).toFixed(1);
@@ -2936,11 +3294,12 @@ let paused = false; // 暂停状态变量
             
             // 玩家移动
             let moveX = 0, moveY = 0;
+            const movementSpeed = player.speed * (adrenalineTimeLeft > 0 ? 2 : 1);
             
-            if (keys['w'] || keys['W']) moveY -= player.speed;
-            if (keys['s'] || keys['S']) moveY += player.speed;
-            if (keys['a'] || keys['A']) moveX -= player.speed;
-            if (keys['d'] || keys['D']) moveX += player.speed;
+            if (keys['w'] || keys['W']) moveY -= movementSpeed;
+            if (keys['s'] || keys['S']) moveY += movementSpeed;
+            if (keys['a'] || keys['A']) moveX -= movementSpeed;
+            if (keys['d'] || keys['D']) moveX += movementSpeed;
             
             // 对角线移动速度修正
             if (moveX !== 0 && moveY !== 0) {
@@ -3217,6 +3576,41 @@ let paused = false; // 暂停状态变量
                     }
                 }
             }
+
+            resolveZombieOverlaps();
+        }
+
+        function resolveZombieOverlaps() {
+            for (let firstIndex = 0; firstIndex < zombies.length; firstIndex++) {
+                const first = zombies[firstIndex];
+
+                for (let secondIndex = firstIndex + 1; secondIndex < zombies.length; secondIndex++) {
+                    const second = zombies[secondIndex];
+                    const dx = second.x - first.x;
+                    const dy = second.y - first.y;
+                    const distance = Math.hypot(dx, dy);
+                    const minimumDistance = first.radius + second.radius;
+
+                    if (distance >= minimumDistance) continue;
+
+                    let directionX;
+                    let directionY;
+                    if (distance === 0) {
+                        const angle = (firstIndex + secondIndex + 1) * Math.PI / 4;
+                        directionX = Math.cos(angle);
+                        directionY = Math.sin(angle);
+                    } else {
+                        directionX = dx / distance;
+                        directionY = dy / distance;
+                    }
+
+                    const separation = (minimumDistance - distance) / 2;
+                    first.x -= directionX * separation;
+                    first.y -= directionY * separation;
+                    second.x += directionX * separation;
+                    second.y += directionY * separation;
+                }
+            }
         }
         
         // 绘制僵尸
@@ -3308,16 +3702,13 @@ let paused = false; // 暂停状态变量
                     radius: 6, // 狙击枪子弹更大
                     damage: currentWeapon.damage,
                     color: '#00ff00', // 绿色子弹表示狙击枪
-                    isSniper: true
+                    isSniper: true,
+                    hitEntities: []
                 });
                 
                 // 更新射击时间和弹药
                 lastShotTime = currentTime;
                 sniperAmmo--;
-                
-                // 狙击枪射击后开始装填
-                sniperReloading = true;
-                sniperReloadStartTime = currentTime;
                 
                 // 创建枪口火焰粒子
                 createParticles(
@@ -3344,17 +3735,23 @@ let paused = false; // 暂停状态变量
                 // 计算子弹方向
                 const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
                 
-                // 创建子弹
-                bullets.push({
-                    x: player.x + Math.cos(angle) * 20,
-                    y: player.y + Math.sin(angle) * 20,
-                    velocityX: Math.cos(angle) * 10,
-                    velocityY: Math.sin(angle) * 10,
-                    radius: 4,
-                    damage: currentWeapon.damage,
-                    color: '#f1c40f',
-                    isSniper: false
-                });
+                const pelletCount = currentWeapon.id === 3 ? 5 : 1;
+                const spreadAngle = currentWeapon.id === 3 ? Math.PI / 9 : 0;
+                for (let pellet = 0; pellet < pelletCount; pellet++) {
+                    const pelletAngle = angle + (pelletCount === 1
+                        ? 0
+                        : -spreadAngle / 2 + spreadAngle * pellet / (pelletCount - 1));
+                    bullets.push({
+                        x: player.x + Math.cos(pelletAngle) * 20,
+                        y: player.y + Math.sin(pelletAngle) * 20,
+                        velocityX: Math.cos(pelletAngle) * 10,
+                        velocityY: Math.sin(pelletAngle) * 10,
+                        radius: 4,
+                        damage: currentWeapon.damage / pelletCount,
+                        color: '#f1c40f',
+                        isSniper: false
+                    });
+                }
                 
                 // 更新射击时间和弹药
                 lastShotTime = currentTime;
@@ -3372,7 +3769,7 @@ let paused = false; // 暂停状态变量
             // 更新UI
             updateUI();
             if (coopRoomCode && !coopHost && bullets.length > previousBulletCount) {
-                coopOutgoingShots.push({ ...bullets[bullets.length - 1] });
+                coopOutgoingShots.push(...bullets.slice(previousBulletCount).map(bullet => ({ ...bullet })));
             }
         }
         
@@ -3439,6 +3836,11 @@ let paused = false; // 暂停状态变量
                 
                 for (let j = zombies.length - 1; j >= 0; j--) {
                     const zombie = zombies[j];
+
+                    if (bullet.isSniper) {
+                        bullet.hitEntities = bullet.hitEntities || [];
+                        if (bullet.hitEntities.includes(zombie)) continue;
+                    }
                     
                     // 计算距离
                     const dx = bullet.x - zombie.x;
@@ -3457,10 +3859,14 @@ let paused = false; // 暂停状态变量
                         if (!bullet.isSniper) {
                             bullets.splice(i, 1);
                         } else {
+                            bullet.hitEntities.push(zombie);
                             // 狙击枪子弹有击退效果
                             const knockback = 15;
                             zombie.x += (dx / distance) * knockback;
                             zombie.y += (dy / distance) * knockback;
+                            if (bullet.hitEntities.length >= 3) {
+                                bullets.splice(i, 1);
+                            }
                         }
                         
                         // 如果僵尸死亡
@@ -3479,7 +3885,7 @@ let paused = false; // 暂停状态变量
                             updateUI();
                         }
                         
-                        if (!bullet.isSniper) {
+                        if (!bullet.isSniper || !bullets.includes(bullet)) {
                             break;
                         }
                     }
@@ -3880,6 +4286,72 @@ let paused = false; // 暂停状态变量
             // 更新商店物品状态
             updateShopItems();
         }
+
+        function renderInventory() {
+            document.getElementById('inventoryHealth').textContent = `${Math.floor(health)} / ${maxHealth}`;
+            document.getElementById('inventoryAmmo').textContent = `${ammo} / ${maxAmmo}`;
+            document.getElementById('inventorySniperAmmo').textContent = `${sniperAmmo} / ${sniperMaxAmmo}`;
+            document.getElementById('inventoryScore').textContent = score.toLocaleString('zh-CN');
+
+            const unlockedWeapons = weapons.filter(weapon => weapon.unlocked);
+            const weaponList = document.getElementById('inventoryWeapons');
+            document.getElementById('inventoryWeaponCount').textContent = `${unlockedWeapons.length} / ${weapons.length}`;
+            weaponList.replaceChildren();
+
+            for (const weapon of unlockedWeapons) {
+                const equipped = weapon.id === currentWeapon.id;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `inventory-weapon${equipped ? ' equipped' : ''}`;
+                button.setAttribute('aria-pressed', String(equipped));
+
+                const top = document.createElement('span');
+                top.className = 'inventory-weapon-top';
+                const name = document.createElement('span');
+                name.className = 'inventory-weapon-name';
+                name.textContent = weapon.name;
+                const state = document.createElement('span');
+                state.className = 'inventory-weapon-state';
+                state.textContent = equipped ? '当前装备' : '点击装备';
+                top.append(name, state);
+
+                const details = document.createElement('span');
+                details.className = 'inventory-weapon-details';
+                const weaponAmmo = weapon.type === 'sniper'
+                    ? `${sniperAmmo}/${sniperMaxAmmo} 发`
+                    : `${ammo}/${maxAmmo} 发`;
+                details.textContent = `${weapon.description} · 伤害 ${weapon.damage} · 弹药 ${weaponAmmo} · 射速 ${Math.round(1000 / weapon.shotDelay)}/秒`;
+
+                button.append(top, details);
+                button.addEventListener('click', () => {
+                    if (!equipped) equipWeapon(weapon.id);
+                    renderInventory();
+                });
+                weaponList.appendChild(button);
+            }
+        }
+
+        function openInventory() {
+            if (!gameStarted || gameOver || paused || waveIntermission || selfRescueActive || coopRoomCode) return;
+            inventoryOpen = true;
+            paused = true;
+            keys = {};
+            renderInventory();
+            const overlay = document.getElementById('inventoryOverlay');
+            overlay.style.display = 'flex';
+            overlay.setAttribute('aria-hidden', 'false');
+            document.getElementById('inventoryClose').focus();
+        }
+
+        function closeInventory() {
+            if (!inventoryOpen) return;
+            inventoryOpen = false;
+            paused = false;
+            keys = {};
+            const overlay = document.getElementById('inventoryOverlay');
+            overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
+        }
         
         // 生成商店物品
         function generateShopItems() {
@@ -3887,10 +4359,13 @@ let paused = false; // 暂停状态变量
             if (!shopItems) return;
             
             shopItems.innerHTML = '';
+            document.querySelectorAll('.shop-tab').forEach(tab => {
+                tab.setAttribute('aria-selected', String(tab.dataset.shopTab === shopTab));
+            });
             
             // 添加武器
             weapons.forEach(weapon => {
-                if (weapon.id === 1) return; // 跳过默认武器
+                if (shopTab !== 'weapons' || weapon.id === 1) return; // 默认手枪无需购买
                 
                 const itemDiv = document.createElement('div');
                 itemDiv.className = `shop-item ${weapon.unlocked ? '' : 'disabled'}`;
@@ -3930,16 +4405,16 @@ let paused = false; // 暂停状态变量
             
             // 添加升级
             upgrades.forEach(upgrade => {
+                if (shopTab !== 'consumables') return;
+
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'shop-item';
                 itemDiv.dataset.id = upgrade.id;
                 itemDiv.dataset.type = 'upgrade';
-                itemDiv.dataset.shortcut = upgrade.shortcut;
                 
                 itemDiv.innerHTML = `
                     <div class="item-name">
                         <span>${upgrade.name}</span>
-                        <span class="shortcut-key">${upgrade.shortcut}</span>
                     </div>
                     <div class="item-description">${upgrade.description}</div>
                     <div class="item-cost">
@@ -4066,29 +4541,22 @@ let paused = false; // 暂停状态变量
                 switch(upgrade.type) {
                     case 'health':
                         health = Math.min(maxHealth, health + 50);
-                        showMessage('生命值恢复了50点！');
+                        showMessage('医疗包已使用，恢复50点生命值！');
                         break;
-                    case 'ammo':
-                        if (currentWeapon.type === "sniper") {
-                            sniperAmmo = sniperMaxAmmo;
-                            showMessage('狙击枪弹药已补充！');
-                        } else {
-                            ammo = maxAmmo;
-                            showMessage('弹药已补充！');
-                        }
+                    case 'adrenaline':
+                        adrenalineTimeLeft = 20;
+                        document.getElementById('adrenalineIndicator').textContent = '肾上腺素: 20.0秒';
+                        document.getElementById('adrenalineIndicator').style.display = 'block';
+                        showMessage('肾上腺素已使用，移动速度提升100%！');
                         break;
                     case 'maxHealth':
                         maxHealth += 20;
-                        health += 20;
-                        showMessage('生命上限增加了20点！');
-                        break;
-                    case 'speed':
-                        player.speed += 0.5;
-                        showMessage('移动速度增加了！');
+                        health = Math.min(maxHealth, health + 20);
+                        showMessage('心之容器已使用，生命上限增加20点！');
                         break;
                     case 'invincible':
                         activateInvincible(3); // 3秒无敌
-                        showMessage('获得3秒无敌时间！');
+                        showMessage('无敌护盾已使用，获得3秒无敌时间！');
                         break;
                 }
                 
@@ -4098,33 +4566,13 @@ let paused = false; // 暂停状态变量
         
         // 通过快捷键购买商店物品
         function buyWithShortcut(shortcutNumber) {
-            // 查找对应的商店物品
-            const items = document.querySelectorAll('.shop-item');
-            let targetItem = null;
-            
-            for (const item of items) {
-                const itemShortcut = parseInt(item.dataset.shortcut);
-                if (itemShortcut === shortcutNumber && !item.classList.contains('disabled')) {
-                    targetItem = item;
-                    break;
-                }
+            const weapon = weapons.find(item => item.id !== 1 && item.shortcut === shortcutNumber);
+            if (weapon) {
+                if (!weapon.unlocked && score >= weapon.cost) buyWeapon(weapon.id);
+                else if (weapon.unlocked) equipWeapon(weapon.id);
+                return;
             }
-            
-            if (targetItem) {
-                const id = parseInt(targetItem.dataset.id);
-                const type = targetItem.dataset.type;
-                
-                if (type === 'weapon') {
-                    const weapon = weapons.find(w => w.id === id);
-                    if (weapon && !weapon.unlocked && score >= weapon.cost) {
-                        buyWeapon(id);
-                    } else if (weapon && weapon.unlocked) {
-                        equipWeapon(id);
-                    }
-                } else if (type === 'upgrade') {
-                    buyUpgrade(id);
-                }
-            }
+
         }
         
         // 重新装弹
@@ -4296,6 +4744,16 @@ let paused = false; // 暂停状态变量
             });
 
             document.getElementById('nextWaveButton').addEventListener('click', nextWave);
+            document.querySelectorAll('.shop-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    shopTab = tab.dataset.shopTab;
+                    generateShopItems();
+                });
+            });
+            document.getElementById('inventoryClose').addEventListener('click', closeInventory);
+            document.getElementById('inventoryOverlay').addEventListener('click', event => {
+                if (event.target.id === 'inventoryOverlay') closeInventory();
+            });
             
             // 暂停界面按钮事件
             document.getElementById('continueButton').addEventListener('click', () => {
@@ -4333,6 +4791,22 @@ let paused = false; // 暂停状态变量
                 // 自救状态下只处理自救按键
                 if (selfRescueActive) {
                     handleSelfRescueKey(e.key);
+                    return;
+                }
+
+                if (e.key === 'Tab' && gameStarted && !gameOver) {
+                    e.preventDefault();
+                    if (e.repeat) return;
+                    if (inventoryOpen) {
+                        closeInventory();
+                    } else if (!paused && !coopRoomCode) {
+                        openInventory();
+                    }
+                    return;
+                }
+
+                if (inventoryOpen && e.key === 'Escape') {
+                    closeInventory();
                     return;
                 }
 
