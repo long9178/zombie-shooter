@@ -680,6 +680,34 @@
             cursor: pointer;
         }
 
+        #inventoryTabs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            margin-top: 18px;
+            border-bottom: 1px solid #8b0000;
+        }
+
+        .inventory-tab {
+            min-height: 46px;
+            border: 0;
+            border-right: 1px solid #612525;
+            border-bottom: 2px solid transparent;
+            background: rgba(0, 0, 0, 0.28);
+            color: #d0c5c5;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .inventory-tab:last-child {
+            border-right: 0;
+        }
+
+        .inventory-tab:hover, .inventory-tab[aria-selected="true"] {
+            color: #ffcc00;
+            background: rgba(139, 0, 0, 0.28);
+            border-bottom-color: #ffcc00;
+        }
+
         #inventorySummary {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -730,6 +758,12 @@
             gap: 10px;
         }
 
+        #inventoryConsumables {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
         .inventory-weapon {
             min-width: 0;
             padding: 14px;
@@ -771,6 +805,66 @@
             overflow-wrap: anywhere;
         }
 
+        .inventory-consumable {
+            display: flex;
+            min-width: 0;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px;
+            background: rgba(55, 20, 20, 0.54);
+            border: 1px solid #563333;
+        }
+
+        .inventory-consumable-info {
+            min-width: 0;
+        }
+
+        .inventory-consumable-name {
+            color: #fff;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .inventory-consumable-count {
+            margin-left: 8px;
+            color: #ffcc00;
+            font-size: 13px;
+        }
+
+        .inventory-consumable-description {
+            margin-top: 7px;
+            color: #aaa;
+            font-size: 12px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .inventory-use-button {
+            min-width: 66px;
+            min-height: 36px;
+            flex: 0 0 auto;
+            padding: 6px 10px;
+            border: 1px solid #ffcc00;
+            background: #6f1010;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .inventory-use-button:disabled {
+            border-color: #555;
+            background: #29292e;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        #inventoryMessage {
+            min-height: 20px;
+            margin-top: 10px;
+            color: #ffcc00;
+            font-size: 13px;
+        }
+
         #inventoryFooter {
             justify-content: flex-end;
             margin-top: 20px;
@@ -791,6 +885,14 @@
 
             #inventoryWeapons {
                 grid-template-columns: 1fr;
+            }
+
+            #inventoryConsumables {
+                grid-template-columns: 1fr;
+            }
+
+            .inventory-consumable {
+                padding: 12px;
             }
         }
         
@@ -1625,19 +1727,31 @@
                             </div>
                             <button id="inventoryClose" type="button" aria-label="关闭背包" title="关闭背包">×</button>
                         </header>
+                        <div id="inventoryTabs" role="tablist" aria-label="背包分类">
+                            <button class="inventory-tab" type="button" role="tab" aria-controls="inventoryWeaponsPanel" aria-selected="true" data-inventory-tab="weapons">武器</button>
+                            <button class="inventory-tab" type="button" role="tab" aria-controls="inventoryConsumablesPanel" aria-selected="false" data-inventory-tab="consumables">消耗品</button>
+                        </div>
                         <div id="inventorySummary" aria-live="polite">
                             <div class="inventory-stat"><span>生命</span><strong id="inventoryHealth"></strong></div>
                             <div class="inventory-stat"><span>常规弹药</span><strong id="inventoryAmmo"></strong></div>
                             <div class="inventory-stat"><span>狙击弹药</span><strong id="inventorySniperAmmo"></strong></div>
                             <div class="inventory-stat"><span>积分</span><strong id="inventoryScore"></strong></div>
                         </div>
-                        <section aria-labelledby="inventoryWeaponsTitle">
+                        <section id="inventoryWeaponsPanel" role="tabpanel" aria-labelledby="inventoryWeaponsTitle">
                             <div class="inventory-section-header">
                                 <h3 id="inventoryWeaponsTitle">已收纳武器</h3>
                                 <span id="inventoryWeaponCount"></span>
                             </div>
                             <div id="inventoryWeapons"></div>
                         </section>
+                        <section id="inventoryConsumablesPanel" role="tabpanel" aria-labelledby="inventoryConsumablesTitle" hidden>
+                            <div class="inventory-section-header">
+                                <h3 id="inventoryConsumablesTitle">消耗品</h3>
+                                <span id="inventoryConsumableCount"></span>
+                            </div>
+                            <div id="inventoryConsumables"></div>
+                        </section>
+                        <p id="inventoryMessage" role="status" aria-live="polite"></p>
                         <footer id="inventoryFooter">按 Tab 或 Esc 关闭</footer>
                     </section>
                 </div>
@@ -1654,13 +1768,6 @@
                 <div id="cooldownIndicator">自救冷却: 0.0秒</div>
                 <div id="adrenalineIndicator">肾上腺素: 20.0秒</div>
                 <div id="reloadIndicator">装填中: 1.5秒</div>
-                <div id="instructions">
-                    击杀僵尸获得积分，用积分购买装备。小心，每波僵尸都会更强！<br>
-                    被僵尸包围时触发自救，按提示按键完成自救！<br>
-                    无敌时间内不会触发自救，僵尸也不会造成伤害！<br>
-                    武器快捷键: 2-5 | 狙击枪(快捷键4): 高伤害，5发弹容，1.5秒装填<br>
-                    按 Tab 打开背包，查看并切换已解锁武器
-                </div>
                 <div id="gameMessage">
                     <h2>游戏结束</h2>
                     <p>你坚持了 <span id="finalWave">0</span> 波</p>
@@ -1815,6 +1922,8 @@ let paused = false; // 暂停状态变量
             { id: 3, name: "无敌护盾", cost: 150, description: "使用后获得3秒无敌时间", type: "invincible" },
             { id: 4, name: "心之容器", cost: 120, description: "使用后生命上限增加20点", type: "maxHealth" }
         ];
+        let consumableInventory = { health: 0, adrenaline: 0, invincible: 0, maxHealth: 0 };
+        let inventoryTab = 'weapons';
         
         // ==================== 自救系统变量 ====================
         let selfRescueActive = false;
@@ -1912,27 +2021,6 @@ let paused = false; // 暂停状态变量
             
             // 隐藏游戏结束消息
             document.getElementById('gameMessage').style.display = 'none';
-            
-            // 显示详细的游戏操作指南
-            setTimeout(() => {
-                showMessage("欢迎来到上帝视角射击游戏！");
-            }, 500);
-            
-            setTimeout(() => {
-                showMessage("基本操作：WASD键移动，点击鼠标射击");
-            }, 2000);
-            
-            setTimeout(() => {
-                showMessage("按R键重新装弹，E键切换武器（手枪/狙击枪）");
-            }, 4000);
-            
-            setTimeout(() => {
-                showMessage("按空格键打开商店购买装备和升级");
-            }, 6000);
-            
-            setTimeout(() => {
-                showMessage("被僵尸包围时，需要按顺序按下提示按键自救！");
-            }, 8000);
             
             // 初始化主菜单
             checkForSavedGame(); // 检查是否有可继续的游戏存档
@@ -2034,6 +2122,7 @@ let paused = false; // 暂停状态变量
                 maxAmmo: maxAmmo,
                 sniperAmmo: sniperAmmo,
                 sniperMaxAmmo: sniperMaxAmmo,
+                consumables: { ...consumableInventory },
                 // 波次进度
                 wave: wave,
                 zombiesInWave: zombiesInWave,
@@ -2848,6 +2937,7 @@ let paused = false; // 暂停状态变量
             ammo = maxAmmo;
             sniperMaxAmmo = 5;
             sniperAmmo = sniperMaxAmmo;
+            consumableInventory = { health: 0, adrenaline: 0, invincible: 0, maxHealth: 0 };
             wave = 1;
             zombiesInWave = 10;
             zombiesKilled = 0;
@@ -2916,6 +3006,15 @@ let paused = false; // 暂停状态变量
             ammo = readSaveNumber(data.ammo, maxAmmo, 0, maxAmmo);
             sniperMaxAmmo = readSaveNumber(data.sniperMaxAmmo, 5, 1, 100);
             sniperAmmo = readSaveNumber(data.sniperAmmo, sniperMaxAmmo, 0, sniperMaxAmmo);
+            const savedConsumables = data.consumables && typeof data.consumables === 'object'
+                ? data.consumables
+                : {};
+            consumableInventory = {
+                health: Math.floor(readSaveNumber(savedConsumables.health, 0, 0, 9999)),
+                adrenaline: Math.floor(readSaveNumber(savedConsumables.adrenaline, 0, 0, 9999)),
+                invincible: Math.floor(readSaveNumber(savedConsumables.invincible, 0, 0, 9999)),
+                maxHealth: Math.floor(readSaveNumber(savedConsumables.maxHealth, 0, 0, 9999))
+            };
             wave = Math.max(1, Math.round(readSaveNumber(data.wave, 1, 1, 9999)));
             zombiesInWave = Math.max(0, Math.round(
                 readSaveNumber(data.zombiesInWave, 10 + Math.floor(wave * 1.5), wave, 99999)
@@ -4296,6 +4395,11 @@ let paused = false; // 暂停状态变量
             const unlockedWeapons = weapons.filter(weapon => weapon.unlocked);
             const weaponList = document.getElementById('inventoryWeapons');
             document.getElementById('inventoryWeaponCount').textContent = `${unlockedWeapons.length} / ${weapons.length}`;
+            document.querySelectorAll('.inventory-tab').forEach(tab => {
+                tab.setAttribute('aria-selected', String(tab.dataset.inventoryTab === inventoryTab));
+            });
+            document.getElementById('inventoryWeaponsPanel').hidden = inventoryTab !== 'weapons';
+            document.getElementById('inventoryConsumablesPanel').hidden = inventoryTab !== 'consumables';
             weaponList.replaceChildren();
 
             for (const weapon of unlockedWeapons) {
@@ -4329,6 +4433,41 @@ let paused = false; // 暂停状态变量
                 });
                 weaponList.appendChild(button);
             }
+
+            const consumableList = document.getElementById('inventoryConsumables');
+            const totalConsumables = upgrades.reduce((total, item) => total + (consumableInventory[item.type] || 0), 0);
+            document.getElementById('inventoryConsumableCount').textContent = `持有 ${totalConsumables} 件`;
+            consumableList.replaceChildren();
+
+            for (const item of upgrades) {
+                const count = consumableInventory[item.type] || 0;
+                const card = document.createElement('article');
+                card.className = 'inventory-consumable';
+
+                const info = document.createElement('div');
+                info.className = 'inventory-consumable-info';
+                const title = document.createElement('div');
+                title.className = 'inventory-consumable-name';
+                title.textContent = item.name;
+                const quantity = document.createElement('span');
+                quantity.className = 'inventory-consumable-count';
+                quantity.textContent = `×${count}`;
+                title.appendChild(quantity);
+                const description = document.createElement('div');
+                description.className = 'inventory-consumable-description';
+                description.textContent = item.description;
+                info.append(title, description);
+
+                const useButton = document.createElement('button');
+                useButton.type = 'button';
+                useButton.className = 'inventory-use-button';
+                useButton.textContent = '使用';
+                useButton.disabled = count <= 0;
+                useButton.addEventListener('click', () => useConsumable(item.id));
+
+                card.append(info, useButton);
+                consumableList.appendChild(card);
+            }
         }
 
         function openInventory() {
@@ -4351,6 +4490,37 @@ let paused = false; // 暂停状态变量
             const overlay = document.getElementById('inventoryOverlay');
             overlay.style.display = 'none';
             overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        function useConsumable(upgradeId) {
+            const item = upgrades.find(upgrade => upgrade.id === upgradeId);
+            if (!item || !consumableInventory[item.type]) return;
+
+            consumableInventory[item.type]--;
+            switch (item.type) {
+                case 'health':
+                    health = Math.min(maxHealth, health + 50);
+                    document.getElementById('inventoryMessage').textContent = '医疗包已使用，恢复50点生命值。';
+                    break;
+                case 'adrenaline':
+                    adrenalineTimeLeft = 20;
+                    document.getElementById('adrenalineIndicator').textContent = '肾上腺素: 20.0秒';
+                    document.getElementById('adrenalineIndicator').style.display = 'block';
+                    document.getElementById('inventoryMessage').textContent = '肾上腺素已使用，移动速度提升100%，持续20秒。';
+                    break;
+                case 'invincible':
+                    activateInvincible(3);
+                    document.getElementById('inventoryMessage').textContent = '无敌护盾已使用，获得3秒无敌时间。';
+                    break;
+                case 'maxHealth':
+                    maxHealth += 20;
+                    health = Math.min(maxHealth, health + 20);
+                    document.getElementById('inventoryMessage').textContent = '心之容器已使用，生命上限增加20点。';
+                    break;
+            }
+
+            updateUI();
+            renderInventory();
         }
         
         // 生成商店物品
@@ -4537,30 +4707,11 @@ let paused = false; // 暂停状态变量
             
             if (upgrade && score >= upgrade.cost) {
                 score -= upgrade.cost;
-                
-                switch(upgrade.type) {
-                    case 'health':
-                        health = Math.min(maxHealth, health + 50);
-                        showMessage('医疗包已使用，恢复50点生命值！');
-                        break;
-                    case 'adrenaline':
-                        adrenalineTimeLeft = 20;
-                        document.getElementById('adrenalineIndicator').textContent = '肾上腺素: 20.0秒';
-                        document.getElementById('adrenalineIndicator').style.display = 'block';
-                        showMessage('肾上腺素已使用，移动速度提升100%！');
-                        break;
-                    case 'maxHealth':
-                        maxHealth += 20;
-                        health = Math.min(maxHealth, health + 20);
-                        showMessage('心之容器已使用，生命上限增加20点！');
-                        break;
-                    case 'invincible':
-                        activateInvincible(3); // 3秒无敌
-                        showMessage('无敌护盾已使用，获得3秒无敌时间！');
-                        break;
-                }
-                
+
+                consumableInventory[upgrade.type] = (consumableInventory[upgrade.type] || 0) + 1;
                 updateUI();
+                if (inventoryOpen) renderInventory();
+                showMessage(`${upgrade.name}已存入背包`);
             }
         }
         
@@ -4748,6 +4899,12 @@ let paused = false; // 暂停状态变量
                 tab.addEventListener('click', () => {
                     shopTab = tab.dataset.shopTab;
                     generateShopItems();
+                });
+            });
+            document.querySelectorAll('.inventory-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    inventoryTab = tab.dataset.inventoryTab;
+                    renderInventory();
                 });
             });
             document.getElementById('inventoryClose').addEventListener('click', closeInventory);
